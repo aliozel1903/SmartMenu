@@ -1,0 +1,504 @@
+@model SmartMenu.ViewModels.MenuViewModel
+@{
+    Layout = null;
+    // ViewBag kullanmadan tüm menü verisini MenuViewModel üzerinden okuyoruz.
+    var kafeAdi = Model.Sube?.SubeAdi ?? Model.Cafe.Ad ?? "Dijital Menü";
+    var kategoriler = Model.Kategoriler ?? new List<SmartMenu.Models.Kategori>();
+    var culture = new System.Globalization.CultureInfo("tr-TR");
+    var invariantCulture = System.Globalization.CultureInfo.InvariantCulture;
+    // Sayfaya şubenin veritabanı Id'sini değil, QR token'ını gömüyoruz.
+    // Müşteri tarayıcısında şube Id'si hiç görünmez, sunucuya da gönderilmez.
+    var menuToken = Model.Sube?.QrToken ?? string.Empty;
+    // Şube bazlı sipariş kilidi: kapalıysa müşteri sadece dijital menüyü inceler.
+    var siparisAktif = Model.Sube?.IsSiparisAktif ?? false;
+    // Şube ayarları kapalıysa ilgili servis butonları müşteri menüsünde hiç gösterilmez.
+    var garsonCagriAktif = Model.Sube?.GarsonCagriAktif ?? false;
+    var hesapIsteAktif = Model.Sube?.HesapIsteAktif ?? false;
+}
+
+<!DOCTYPE html>
+<html class="light" lang="tr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>@kafeAdi - SmartMenu</title>
+    <link rel="icon" type="image/png" href="~/img/smartmenu-logo.png" />
+    <link rel="apple-touch-icon" href="~/img/smartmenu-logo.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Yumuşak kaydırma efekti (Butonlara tıklayınca yavaşça iner) */
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        /* Kategori çubuğunda scrollbar görünmesin ama yatay kaydırma çalışsın. */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Sticky kategori menüsünün altında başlıklar ezilmesin diye ofset bırakıyoruz. */
+        section { scroll-margin-top: 96px; }
+    </style>
+</head>
+<body class="bg-[#fbfaf7] text-stone-950 min-h-screen pb-28">
+
+    <header class="px-5 pt-8 pb-5 bg-[#181512] text-white">
+        <div class="mx-auto w-full max-w-3xl">
+            <p class="text-[11px] font-bold uppercase tracking-[0.28em] text-amber-200/80">SmartMenu</p>
+            <h1 class="mt-3 text-4xl font-extrabold leading-none tracking-tight sm:text-5xl">@kafeAdi</h1>
+            @if (!string.IsNullOrWhiteSpace(Model.Sube?.Adres ?? Model.Cafe.Adres))
+            {
+                <p class="mt-3 max-w-xl text-sm leading-6 text-stone-300">@(Model.Sube?.Adres ?? Model.Cafe.Adres)</p>
+            }
+        </div>
+    </header>
+
+    <nav class="sticky top-0 z-40 border-b border-stone-200 bg-[#fbfaf7]/95 px-5 py-3 backdrop-blur-xl">
+        <div class="hide-scrollbar mx-auto flex w-full max-w-3xl gap-2 overflow-x-auto">
+            @foreach (var kategori in kategoriler)
+            {
+                <a href="#kategori-@kategori.Id" class="flex-shrink-0 rounded-full border border-stone-200 bg-white px-4 py-2 text-[12px] font-extrabold uppercase tracking-wide text-stone-800 shadow-sm transition hover:border-amber-500 hover:text-amber-700">
+                    @kategori.Ad
+                </a>
+            }
+        </div>
+    </nav>
+
+    <main class="mx-auto w-full max-w-3xl px-5 pb-12 pt-6">
+        @if (!kategoriler.Any())
+        {
+            <div class="rounded-lg border border-dashed border-stone-300 bg-white p-8 text-center">
+                <span class="material-symbols-outlined text-4xl text-stone-400">restaurant_menu</span>
+                <p class="mt-3 text-sm font-semibold text-stone-600">Bu kafe için henüz aktif menü bulunmuyor.</p>
+            </div>
+        }
+
+        @foreach (var kategori in kategoriler)
+        {
+            var urunler = kategori.Urunler ?? new List<SmartMenu.Models.Urun>();
+            <section id="kategori-@kategori.Id" class="py-6">
+                <div class="mb-4 flex items-end justify-between gap-4">
+                    <h2 class="text-2xl font-extrabold text-stone-950">@kategori.Ad</h2>
+                    <span class="text-xs font-bold uppercase tracking-widest text-stone-400">@urunler.Count ürün</span>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                    @foreach (var urun in urunler)
+                    {
+                        <article class="flex min-h-32 gap-3 rounded-lg border border-stone-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                            <div class="h-28 w-28 flex-shrink-0 overflow-hidden rounded-md bg-stone-100">
+                                @if (!string.IsNullOrEmpty(urun.ResimUrl))
+                                {
+                                    <img src="@urun.ResimUrl" alt="@urun.Ad" class="w-full h-full object-cover" />
+                                }
+                                else
+                                {
+                                    <div class="w-full h-full flex items-center justify-center text-stone-300">
+                                        <span class="material-symbols-outlined text-3xl">restaurant</span>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="flex min-w-0 flex-1 flex-col justify-between py-1">
+                                <div>
+                                    <h3 class="text-[15px] font-extrabold leading-snug text-stone-950">@urun.Ad</h3>
+                                    @if (!string.IsNullOrWhiteSpace(urun.Icerik))
+                                    {
+                                        <p class="mt-1 line-clamp-3 text-[13px] leading-5 text-stone-500">@urun.Icerik</p>
+                                    }
+                                </div>
+                                <div class="mt-3 text-[16px] font-extrabold text-amber-700">
+                                    @urun.Fiyat.ToString("C", culture)
+                                </div>
+                                @if (siparisAktif)
+                                {
+                                    <button type="button"
+                                            class="add-to-cart mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#181512] px-3 py-2 text-[12px] font-extrabold text-white transition active:scale-[0.98]"
+                                            data-id="@urun.Id"
+                                            data-name="@urun.Ad"
+                                            data-price="@urun.Fiyat.ToString(invariantCulture)">
+                                        <span class="material-symbols-outlined text-[16px]">add_shopping_cart</span>
+                                        Sepete Ekle
+                                    </button>
+                                }
+                            </div>
+                        </article>
+                    }
+
+                    @if (!urunler.Any())
+                    {
+                        <div class="rounded-lg border border-dashed border-stone-300 bg-white p-6 text-center sm:col-span-2">
+                            <p class="text-sm font-semibold text-stone-500">Bu kategoride henüz ürün bulunmuyor.</p>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    </main>
+
+    <script>
+        const menuToken = @Html.Raw(Json.Serialize(menuToken));
+    </script>
+
+    @if (garsonCagriAktif || hesapIsteAktif)
+    {
+        <div class="fixed bottom-5 left-5 z-50 flex flex-col gap-2">
+            @if (garsonCagriAktif)
+            {
+                <button type="button"
+                        class="service-call-button inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-xs font-extrabold text-stone-900 shadow-[0_10px_28px_rgba(0,0,0,0.16)] ring-1 ring-stone-200 transition active:scale-[0.98]"
+                        data-type="Garson">
+                    <span class="material-symbols-outlined text-[18px]">room_service</span>
+                    Garson Çağır
+                </button>
+            }
+
+            @if (hesapIsteAktif)
+            {
+                <button type="button"
+                        class="service-call-button inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-xs font-extrabold text-stone-900 shadow-[0_10px_28px_rgba(0,0,0,0.16)] ring-1 ring-stone-200 transition active:scale-[0.98]"
+                        data-type="Hesap">
+                    <span class="material-symbols-outlined text-[18px]">payments</span>
+                    Hesap İste
+                </button>
+            }
+        </div>
+    }
+
+    @if (siparisAktif)
+    {
+    <button id="cartButton" type="button" class="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 rounded-full bg-amber-700 px-5 py-3 text-sm font-extrabold text-white shadow-[0_12px_30px_rgba(180,83,9,0.35)] active:scale-[0.98]">
+        <span class="material-symbols-outlined text-[20px]">shopping_bag</span>
+        Sepetim (<span id="cartCount">0</span>)
+    </button>
+
+    <div id="cartModal" class="fixed inset-0 z-[60] hidden bg-black/50 px-4 py-6 backdrop-blur-sm">
+        <div class="mx-auto flex h-full max-w-md items-end sm:items-center">
+            <div class="w-full rounded-2xl bg-white p-5 shadow-2xl">
+                <div class="mb-4 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-stone-950">Sepetim</h2>
+                        <p class="text-xs font-semibold text-stone-500">Siparişinizi onaylamadan önce kontrol edin.</p>
+                    </div>
+                    <button id="closeCart" type="button" class="rounded-full p-2 text-stone-500 hover:bg-stone-100">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <div id="cartItems" class="max-h-72 space-y-3 overflow-y-auto"></div>
+
+                <div class="mt-5 rounded-xl bg-stone-50 p-4">
+                    <label for="masaNo" class="mb-2 block text-[13px] font-bold text-stone-700">Masa Numaranız</label>
+                    <input id="masaNo" type="text" class="w-full rounded-lg border border-stone-200 px-4 py-3 text-sm font-semibold outline-none focus:border-amber-700 focus:ring-4 focus:ring-amber-700/10" placeholder="Örn: 12" />
+                    <div class="mt-4 flex items-center justify-between">
+                        <span class="text-sm font-bold text-stone-500">Toplam</span>
+                        <span id="cartTotal" class="text-xl font-extrabold text-amber-700">₺0,00</span>
+                    </div>
+                </div>
+
+                <button id="submitOrder" type="button" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#181512] px-5 py-3.5 text-sm font-extrabold text-white transition active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+                    Siparişi Onayla
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cartKey = `smartmenu-cart-${menuToken}`;
+        const cartButton = document.getElementById('cartButton');
+        const cartCount = document.getElementById('cartCount');
+        const cartModal = document.getElementById('cartModal');
+        const closeCart = document.getElementById('closeCart');
+        const cartItems = document.getElementById('cartItems');
+        const cartTotal = document.getElementById('cartTotal');
+        const submitOrder = document.getElementById('submitOrder');
+        const masaNoInput = document.getElementById('masaNo');
+
+        function getCart() {
+            return JSON.parse(localStorage.getItem(cartKey) || '[]');
+        }
+
+        function saveCart(cart) {
+            localStorage.setItem(cartKey, JSON.stringify(cart));
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value);
+        }
+
+        function showMenuToast(title, icon = 'success', timer = 1300) {
+            // Müşteri menüsü için küçük, mobil uyumlu SweetAlert bildirimi.
+            Swal.fire({
+                toast: true,
+                position: 'top',
+                icon,
+                title,
+                showConfirmButton: false,
+                timer,
+                timerProgressBar: true,
+                width: 'min(92vw, 340px)',
+                padding: '0.75rem 0.9rem',
+                background: '#ffffff',
+                color: '#181512',
+                customClass: {
+                    popup: 'rounded-xl shadow-lg',
+                    title: 'text-sm font-extrabold'
+                }
+            });
+        }
+
+        function renderCart() {
+            const cart = getCart();
+            const totalCount = cart.reduce((sum, item) => sum + item.adet, 0);
+            const totalPrice = cart.reduce((sum, item) => sum + (item.fiyat * item.adet), 0);
+
+            cartCount.textContent = totalCount;
+            cartTotal.textContent = formatCurrency(totalPrice);
+            cartItems.innerHTML = '';
+
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div class="rounded-xl border border-dashed border-stone-200 p-6 text-center text-sm font-semibold text-stone-400">Sepetiniz boş.</div>';
+                return;
+            }
+
+            cart.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-3 rounded-xl border border-stone-100 p-3';
+                row.innerHTML = `
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-extrabold text-stone-950">${item.ad}</p>
+                        <p class="text-xs font-semibold text-stone-500">${formatCurrency(item.fiyat)}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" class="cart-decrease rounded-full bg-stone-100 px-2 py-1 font-bold" data-id="${item.urunId}">-</button>
+                        <span class="w-6 text-center text-sm font-extrabold">${item.adet}</span>
+                        <button type="button" class="cart-increase rounded-full bg-stone-100 px-2 py-1 font-bold" data-id="${item.urunId}">+</button>
+                    </div>
+                `;
+                cartItems.appendChild(row);
+            });
+        }
+
+        function changeQuantity(urunId, delta) {
+            const cart = getCart();
+            const item = cart.find(x => x.urunId === urunId);
+            if (!item) return;
+
+            item.adet += delta;
+            const nextCart = cart.filter(x => x.adet > 0);
+            saveCart(nextCart);
+            renderCart();
+        }
+
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', function () {
+                const urunId = Number(this.dataset.id);
+                const cart = getCart();
+                const existing = cart.find(item => item.urunId === urunId);
+
+                if (existing) {
+                    existing.adet++;
+                } else {
+                    cart.push({
+                        urunId,
+                        ad: this.dataset.name,
+                        fiyat: Number(this.dataset.price),
+                        adet: 1
+                    });
+                }
+
+                saveCart(cart);
+                renderCart();
+                showMenuToast(`${this.dataset.name} sepete eklendi`);
+            });
+        });
+
+        cartItems.addEventListener('click', function (event) {
+            const increase = event.target.closest('.cart-increase');
+            const decrease = event.target.closest('.cart-decrease');
+
+            if (increase) changeQuantity(Number(increase.dataset.id), 1);
+            if (decrease) changeQuantity(Number(decrease.dataset.id), -1);
+        });
+
+        cartButton.addEventListener('click', function () {
+            renderCart();
+            cartModal.classList.remove('hidden');
+        });
+
+        closeCart.addEventListener('click', function () {
+            cartModal.classList.add('hidden');
+        });
+
+        submitOrder.addEventListener('click', async function () {
+            const cart = getCart();
+            const masaNo = masaNoInput.value.trim();
+
+            if (cart.length === 0) {
+                showMenuToast('Sepetiniz boş.', 'info');
+                return;
+            }
+
+            if (!masaNo) {
+                showMenuToast('Lütfen masa numaranızı yazın.', 'warning');
+                return;
+            }
+
+            submitOrder.disabled = true;
+            submitOrder.textContent = 'Gönderiliyor...';
+
+            try {
+                const response = await fetch('/Menu/SiparisOlustur', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token: menuToken,
+                        masaNo,
+                        urunler: cart.map(item => ({ urunId: item.urunId, adet: item.adet }))
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    showMenuToast(result.message || 'Sipariş oluşturulamadı.', 'error');
+                    return;
+                }
+
+                localStorage.removeItem(cartKey);
+                renderCart();
+                cartModal.classList.add('hidden');
+                showMenuToast(result.message || 'Siparişiniz alındı.', 'success', 3200);
+            } finally {
+                submitOrder.disabled = false;
+                submitOrder.innerHTML = '<span class="material-symbols-outlined text-[20px]">receipt_long</span>Siparişi Onayla';
+            }
+        });
+
+        renderCart();
+    </script>
+    }
+
+    <script>
+        const serviceCallCooldownMs = 180000;
+        const serviceCallTimeKey = 'sonCagriZamani';
+        const serviceCallButtons = document.querySelectorAll('.service-call-button');
+
+        function getServiceCallRemainingMs() {
+            const lastCallTime = Number(localStorage.getItem(serviceCallTimeKey) || 0);
+            return Math.max(0, serviceCallCooldownMs - (Date.now() - lastCallTime));
+        }
+
+        function showServiceAlert(title, icon = 'info', timer = 2200) {
+            // Garson/Hesap bildirimlerinde de küçük ve mobil uyumlu SweetAlert kullanıyoruz.
+            Swal.fire({
+                toast: true,
+                position: 'top',
+                icon,
+                title,
+                showConfirmButton: false,
+                timer,
+                timerProgressBar: true,
+                width: 'min(92vw, 340px)',
+                padding: '0.75rem 0.9rem',
+                background: '#ffffff',
+                color: '#181512',
+                customClass: {
+                    popup: 'rounded-xl shadow-lg',
+                    title: 'text-sm font-extrabold'
+                }
+            });
+        }
+
+        function updateServiceCallButtons() {
+            const remainingMs = getServiceCallRemainingMs();
+            const isCoolingDown = remainingMs > 0;
+
+            serviceCallButtons.forEach(button => {
+                button.disabled = isCoolingDown;
+                button.classList.toggle('opacity-50', isCoolingDown);
+                button.classList.toggle('cursor-not-allowed', isCoolingDown);
+            });
+        }
+
+        function warnServiceCallCooldown() {
+            const remainingSeconds = Math.ceil(getServiceCallRemainingMs() / 1000);
+            if (remainingSeconds > 0) {
+                showServiceAlert(`Lütfen yeni bir çağrı yapmadan önce ${remainingSeconds} saniye bekleyin.`, 'warning', 2600);
+                return true;
+            }
+
+            return false;
+        }
+
+        async function sendServiceCall(type) {
+            if (warnServiceCallCooldown()) {
+                updateServiceCallButtons();
+                return;
+            }
+
+            const masaResult = await Swal.fire({
+                title: type === 'Hesap' ? 'Hesap iste' : 'Garson çağır',
+                input: 'text',
+                inputLabel: 'Masa numaranız',
+                inputPlaceholder: 'Örn: 12',
+                showCancelButton: true,
+                confirmButtonText: 'Gönder',
+                cancelButtonText: 'Vazgeç',
+                confirmButtonColor: '#181512',
+                cancelButtonColor: '#6b7280',
+                width: 'min(92vw, 360px)',
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'rounded-xl',
+                    cancelButton: 'rounded-xl',
+                    input: 'rounded-xl'
+                },
+                inputValidator: value => {
+                    if (!value || !value.trim()) {
+                        return 'Lütfen masa numaranızı yazın.';
+                    }
+                }
+            });
+
+            if (!masaResult.isConfirmed) return;
+
+            try {
+                const response = await fetch('/Menu/BildirimGonder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token: menuToken,
+                        masaNo: masaResult.value.trim(),
+                        bildirimTipi: type
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    showServiceAlert(result.message || 'Çağrı gönderilemedi.', 'error', 3200);
+                    return;
+                }
+
+                localStorage.setItem(serviceCallTimeKey, Date.now().toString());
+                updateServiceCallButtons();
+                showServiceAlert(result.message || 'Çağrınız personele iletildi.', 'success', 3200);
+            } catch {
+                showServiceAlert('Çağrı gönderilirken bir sorun oluştu.', 'error', 3200);
+            }
+        }
+
+        serviceCallButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                sendServiceCall(this.dataset.type);
+            });
+        });
+
+        updateServiceCallButtons();
+        setInterval(updateServiceCallButtons, 1000);
+    </script>
+</body>
+</html>

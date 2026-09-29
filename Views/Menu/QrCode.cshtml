@@ -1,0 +1,379 @@
+@model IEnumerable<SmartMenu.Models.Sube>
+@{
+    // Bu sayfa Admin paneli layoutunu kullanır. Layout'u null yapmıyoruz.
+    ViewData["Title"] = "QR Kod Jeneratörü";
+    var subeler = Model?.ToList() ?? new List<SmartMenu.Models.Sube>();
+    var seciliSubeId = ViewBag.SeciliSubeId as int? ?? subeler.FirstOrDefault()?.Id ?? 0;
+    var kafeAdi = ViewBag.KafeAdi as string ?? "SmartMenu";
+    var kafeLogoUrl = ViewBag.KafeLogoUrl as string;
+}
+
+<div class="min-h-[calc(100dvh-180px)] flex items-center justify-center">
+    <section class="w-full max-w-xl bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 sm:p-8 text-center shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+        <div class="mx-auto w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-5">
+            <span class="material-symbols-outlined text-[32px]">qr_code_2</span>
+        </div>
+
+        <h1 class="text-2xl font-bold text-on-surface tracking-tight">QR Kod Jeneratörü</h1>
+        <p class="mt-2 text-[13px] leading-6 text-on-surface-variant">
+            QR kod oluşturmak istediğiniz şubeyi seçin. Kod müşteriyi doğrudan o şubenin menüsüne götürür.
+        </p>
+
+        @if (subeler.Any())
+        {
+            <div class="mt-6 text-left">
+                <label for="subeSelect" class="block text-[13px] font-semibold text-on-surface-variant mb-2">Şube Seç</label>
+                <select id="subeSelect" style="background-image: none;" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all">
+                    @foreach (var sube in subeler)
+                    {
+                        <option value="@sube.Id"
+                                data-token="@sube.QrToken"
+                                data-tarih="@sube.QrTokenTarihi.ToLocalTime().ToString("dd.MM.yyyy HH:mm")"
+                                selected="@(sube.Id == seciliSubeId)">@sube.SubeAdi</option>
+                    }
+                </select>
+            </div>
+
+            <div class="mt-8 bg-white border border-surface-container rounded-2xl p-5 shadow-inner">
+                <!-- QR kod JavaScript ile bu kutunun içine çizilecek. -->
+                <div id="qrCode" class="min-h-[256px] flex items-center justify-center"></div>
+            </div>
+
+            <p id="menuUrl" class="mt-5 break-all bg-surface-container rounded-xl px-4 py-3 text-[12px] font-semibold text-on-surface-variant"></p>
+
+            <p class="mt-2 text-[12px] text-on-surface-variant">
+                Son yenileme: <span id="tokenTarihi" class="font-semibold"></span>
+            </p>
+
+            <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button id="downloadQr" type="button" class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary-container transition-all active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-[20px]">download</span>
+                    QR Kodu İndir
+                </button>
+
+                <button id="printQr" type="button" class="inline-flex items-center justify-center gap-2 rounded-xl bg-surface-container-lowest border border-outline-variant px-5 py-3 text-sm font-bold text-on-surface hover:bg-surface-container transition-all active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-[20px]">print</span>
+                    Masa Kartını Yazdır
+                </button>
+            </div>
+
+            <!-- Güvenlik: QR kod ele geçirilirse/kötüye kullanılırsa yönetici eski kodu iptal edebilmeli. -->
+            <div class="mt-6 pt-6 border-t border-outline-variant text-left">
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-[20px] text-on-surface-variant mt-0.5">shield</span>
+                    <div class="flex-1">
+                        <p class="text-[13px] font-bold text-on-surface">QR Kod Güvenliği</p>
+                        <p class="mt-1 text-[12px] leading-5 text-on-surface-variant">
+                            Bu QR kod, şubenin veritabanı numarasını değil tahmin edilemez bir güvenlik anahtarı taşır.
+                            Kod başkasının eline geçerse veya kötüye kullanılırsa yenileyerek eskisini anında geçersiz kılabilirsiniz.
+                            Yenileme sonrası masalardaki eski kodlar çalışmayacağı için yeni kodu yazdırıp değiştirmeniz gerekir.
+                        </p>
+                        <p class="mt-2 text-[12px] leading-5 text-on-surface-variant">
+                            <strong>Masadaki kodu koruyun:</strong> QR kodun üzerine sahte bir etiket yapıştırılması
+                            en yaygın saldırıdır ve müşteri sahte kodu okuttuğunda sistemimize hiç ulaşmadığı için
+                            yazılımsal olarak engellenemez. Kodu sökülemeyecek şekilde (lamine, cam altı veya masa standına sabit)
+                            yerleştirin ve vardiya başlarında kontrol edin. Taramalarda ani düşüş olursa panelde uyarı gösterilir.
+                        </p>
+
+                        <form asp-controller="Subeler" asp-action="QrYenile" method="post" class="mt-3 qr-yenile-form">
+                            <input type="hidden" name="id" id="qrYenileSubeId" value="@seciliSubeId" />
+                            <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl border border-error/30 bg-error/5 px-4 py-2.5 text-[13px] font-bold text-error hover:bg-error/10 transition-all active:scale-[0.98]">
+                                <span class="material-symbols-outlined text-[18px]">autorenew</span>
+                                QR Kodu Yenile ve Eskisini İptal Et
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="mt-8 rounded-2xl border border-dashed border-outline-variant p-8">
+                <p class="text-sm font-semibold text-on-surface-variant">QR kod oluşturmak için önce bir şube ekleyin.</p>
+                <a asp-controller="Subeler" asp-action="Create" class="inline-flex mt-4 items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white">
+                    Şube Ekle
+                </a>
+            </div>
+        }
+    </section>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        const qrContainer = document.getElementById('qrCode');
+        const menuUrlText = document.getElementById('menuUrl');
+        const downloadButton = document.getElementById('downloadQr');
+        const printButton = document.getElementById('printQr');
+        const subeSelect = document.getElementById('subeSelect');
+
+        const tokenTarihiText = document.getElementById('tokenTarihi');
+        const qrYenileSubeId = document.getElementById('qrYenileSubeId');
+
+        const kafeAdi = @Html.Raw(Json.Serialize(kafeAdi));
+        const kafeLogoUrl = @Html.Raw(Json.Serialize(kafeLogoUrl));
+
+        // Logo varsa önceden yüklüyoruz ki QR çizilirken hazır olsun.
+        let logoGorsel = null;
+        if (kafeLogoUrl) {
+            logoGorsel = new Image();
+            logoGorsel.onload = function () { rozetCiz(); };
+            logoGorsel.src = kafeLogoUrl;
+        }
+
+        // Marka adının baş harfleri QR'ın ortasındaki rozette görünür (ör. "Kahve Dünyası" -> "KD").
+        const basHarfler = kafeAdi
+            .split(/\s+/)
+            .filter(kelime => kelime.length > 0)
+            .slice(0, 2)
+            .map(kelime => kelime[0].toLocaleUpperCase('tr-TR'))
+            .join('') || 'SM';
+
+        let currentQr = null;
+
+        function seciliOption() {
+            return subeSelect?.options[subeSelect.selectedIndex];
+        }
+
+        // QR artık şubenin veritabanı Id'sini değil, sunucuda üretilen güvenlik token'ını taşıyor.
+        function buildMenuUrl() {
+            const token = seciliOption()?.dataset.token || '';
+            return window.location.origin + '/Menu?token=' + encodeURIComponent(token);
+        }
+
+        function renderQr() {
+            if (!qrContainer || !subeSelect) {
+                return;
+            }
+
+            const menuUrl = buildMenuUrl();
+            qrContainer.innerHTML = '';
+            menuUrlText.textContent = menuUrl;
+
+            // Yenile butonu ve "son yenileme" bilgisi seçili şubeyi takip etsin.
+            if (tokenTarihiText) {
+                tokenTarihiText.textContent = seciliOption()?.dataset.tarih || '-';
+            }
+            if (qrYenileSubeId) {
+                qrYenileSubeId.value = subeSelect.value;
+            }
+
+            // Şube değiştikçe aynı kutuda yeni QR kodu üretiyoruz.
+            currentQr = new QRCode(qrContainer, {
+                text: menuUrl,
+                width: 256,
+                height: 256,
+                colorDark: '#1b1b1d',
+                colorLight: '#ffffff',
+                // Hata düzeltme seviyesi H, kodun ~%30'u okunamasa bile taranabilmesini sağlar.
+                // Ortaya marka rozetini koyabilmemizin sebebi bu.
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // Kütüphane çizimi bitirdikten sonra rozeti üzerine bindiriyoruz.
+            setTimeout(rozetCiz, 40);
+        }
+
+        // QR'ın ortasına markanın baş harflerini taşıyan bir rozet çizer.
+        // NOT: Bu bir güvenlik önlemi DEĞİL, marka tanınırlığıdır. Saldırgan da aynı rozeti
+        // kendi sahte kodunun ortasına koyabilir. Gerçek doğrulama, kart üzerindeki adres metnidir.
+        function rozetCiz() {
+            const canvas = qrContainer?.querySelector('canvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const boyut = canvas.width;
+            // Rozet, kodun %22'sini kaplar; H seviyesinin tolere ettiği %30'un altında kalır.
+            const rozetBoyut = Math.round(boyut * 0.22);
+            const x = (boyut - rozetBoyut) / 2;
+            const y = (boyut - rozetBoyut) / 2;
+            const yaricap = Math.round(rozetBoyut * 0.22);
+
+            // Rozetin arkasını beyazla temizleyip yuvarlak köşeli bir kutu çiziyoruz.
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(x + yaricap, y);
+            ctx.arcTo(x + rozetBoyut, y, x + rozetBoyut, y + rozetBoyut, yaricap);
+            ctx.arcTo(x + rozetBoyut, y + rozetBoyut, x, y + rozetBoyut, yaricap);
+            ctx.arcTo(x, y + rozetBoyut, x, y, yaricap);
+            ctx.arcTo(x, y, x + rozetBoyut, y, yaricap);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = '#0061A4';
+            ctx.lineWidth = Math.max(2, Math.round(rozetBoyut * 0.06));
+            ctx.stroke();
+
+            if (logoGorsel && logoGorsel.complete && logoGorsel.naturalWidth > 0) {
+                // Logo, rozetin içine oranı bozulmadan sığdırılır.
+                const icBosluk = Math.round(rozetBoyut * 0.16);
+                const alan = rozetBoyut - (icBosluk * 2);
+                const olcek = Math.min(alan / logoGorsel.naturalWidth, alan / logoGorsel.naturalHeight);
+                const genislik = logoGorsel.naturalWidth * olcek;
+                const yukseklik = logoGorsel.naturalHeight * olcek;
+
+                ctx.drawImage(
+                    logoGorsel,
+                    (boyut - genislik) / 2,
+                    (boyut - yukseklik) / 2,
+                    genislik,
+                    yukseklik
+                );
+            }
+            else {
+                // Logo yüklenmemişse markanın baş harfleri kullanılır.
+                ctx.fillStyle = '#0061A4';
+                ctx.font = `bold ${Math.round(rozetBoyut * 0.45)}px Arial, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(basHarfler, boyut / 2, boyut / 2 + 1);
+            }
+
+            // Kütüphane bazı tarayıcılarda canvas yerine <img> gösterir; onu da güncelliyoruz.
+            const image = qrContainer.querySelector('img');
+            if (image) {
+                image.src = canvas.toDataURL('image/png');
+            }
+        }
+
+        function getQrDataUrl() {
+            const canvas = qrContainer?.querySelector('canvas');
+            const image = qrContainer?.querySelector('img');
+            return canvas ? canvas.toDataURL('image/png') : image?.src;
+        }
+
+        subeSelect?.addEventListener('change', renderQr);
+        renderQr();
+
+        // QR yenileme geri alınamaz: onaylanınca masalardaki tüm eski kodlar ölür.
+        document.querySelector('form.qr-yenile-form')?.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+
+            Swal.fire({
+                title: 'QR kodu yenilensin mi?',
+                text: 'Bu şubenin mevcut QR kodu geçersiz olacak. Masalardaki basılı kodlar artık çalışmayacağı için yeni kodu yazdırıp değiştirmeniz gerekir.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Evet, Yenile',
+                cancelButtonText: 'Vazgeç',
+                confirmButtonColor: '#ba1a1a',
+                cancelButtonColor: '#6b7280',
+                reverseButtons: true,
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'rounded-xl',
+                    cancelButton: 'rounded-xl'
+                }
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+
+        downloadButton?.addEventListener('click', function () {
+            const dataUrl = getQrDataUrl();
+            if (!dataUrl) return;
+
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = 'smartmenu-sube-qr-kod.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        printButton?.addEventListener('click', function () {
+            const dataUrl = getQrDataUrl();
+            if (!dataUrl) return;
+
+            // Tüm admin ekranını değil, sadece QR kod görselini yazdırmak için geçici bir iframe kullanıyoruz.
+            const printFrame = document.createElement('iframe');
+            printFrame.style.position = 'fixed';
+            printFrame.style.right = '0';
+            printFrame.style.bottom = '0';
+            printFrame.style.width = '0';
+            printFrame.style.height = '0';
+            printFrame.style.border = '0';
+            document.body.appendChild(printFrame);
+
+            const subeAdi = seciliOption()?.textContent.trim() || '';
+            const alanAdi = window.location.host;
+
+            // Logo yüklenmişse kartın en üstünde de gösterilir.
+            // Yazdırma penceresi ayrı bir belge olduğu için görseli data URI'ye çevirip gömüyoruz;
+            // aksi halde yazdırma anında yüklenmeye yetişemeyip boş çıkabilir.
+            let logoEtiketi = '';
+            if (logoGorsel && logoGorsel.complete && logoGorsel.naturalWidth > 0) {
+                const logoCanvas = document.createElement('canvas');
+                logoCanvas.width = logoGorsel.naturalWidth;
+                logoCanvas.height = logoGorsel.naturalHeight;
+                logoCanvas.getContext('2d').drawImage(logoGorsel, 0, 0);
+                logoEtiketi = `<img class="logo" src="${logoCanvas.toDataURL('image/png')}" alt="">`;
+            }
+
+            const printDocument = printFrame.contentWindow.document;
+            printDocument.open();
+            // Çıplak QR yerine masaya konulacak tam bir kart basıyoruz.
+            // Karttaki adres metni, sahte QR etiketine karşı müşterinin elindeki tek gerçek doğrulama aracıdır:
+            // müşteri kodu okuttuktan sonra tarayıcıdaki adresin burada yazanla aynı olduğunu görebilir.
+            printDocument.write(`
+                <!DOCTYPE html>
+                <html lang="tr">
+                <head>
+                    <meta charset="utf-8">
+                    <title>${kafeAdi} - Menü Kartı</title>
+                    <style>
+                        @@page { margin: 14mm; }
+                        * { box-sizing: border-box; }
+                        body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: Arial, Helvetica, sans-serif; color: #1b1b1d; }
+                        .kart { width: 92mm; border: 2px solid #0061A4; border-radius: 6mm; padding: 9mm 7mm; text-align: center; }
+                        .logo { max-width: 34mm; max-height: 18mm; margin: 0 auto 4mm; display: block; }
+                        .marka { font-size: 20pt; font-weight: bold; letter-spacing: -0.3pt; margin: 0; }
+                        .sube { font-size: 11pt; color: #5a5a5f; margin: 2mm 0 0; }
+                        .ayrac { height: 1px; background: #d9d9de; margin: 6mm 0; }
+                        .cagri { font-size: 13pt; font-weight: bold; margin: 0 0 5mm; }
+                        .qr-gorsel { width: 62mm; height: 62mm; image-rendering: crisp-edges; }
+                        .guvenlik { margin-top: 6mm; padding-top: 5mm; border-top: 1px dashed #b9b9be; }
+                        .guvenlik-baslik { font-size: 8.5pt; font-weight: bold; color: #5a5a5f; text-transform: uppercase; letter-spacing: 0.5pt; margin: 0 0 2mm; }
+                        .guvenlik-metin { font-size: 8.5pt; line-height: 1.45; color: #5a5a5f; margin: 0; }
+                        .alan-adi { display: inline-block; margin-top: 2mm; font-size: 10pt; font-weight: bold; color: #0061A4; }
+                    </style>
+                </head>
+                <body>
+                    <div class="kart">
+                        ${logoEtiketi}
+                        <p class="marka">${kafeAdi}</p>
+                        <p class="sube">${subeAdi}</p>
+
+                        <div class="ayrac"></div>
+
+                        <p class="cagri">Menü için kodu okutun</p>
+                        <img class="qr-gorsel" src="${dataUrl}" alt="${kafeAdi} dijital menü QR kodu">
+
+                        <div class="guvenlik">
+                            <p class="guvenlik-baslik">Güvenlik Kontrolü</p>
+                            <p class="guvenlik-metin">
+                                Kodu okuttuktan sonra tarayıcınızın adres çubuğunda
+                                aşağıdaki adresin yazdığını doğrulayın.
+                                Farklı bir adres görüyorsanız sayfayı kapatıp personele bildirin.
+                            </p>
+                            <span class="alan-adi">${alanAdi}</span>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+            printDocument.close();
+
+            printFrame.onload = function () {
+                printFrame.contentWindow.focus();
+                printFrame.contentWindow.print();
+                setTimeout(function () {
+                    document.body.removeChild(printFrame);
+                }, 500);
+            };
+        });
+    </script>
+}

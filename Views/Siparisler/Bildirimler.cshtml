@@ -1,0 +1,74 @@
+@model IEnumerable<SmartMenu.Models.MasaBildirim>
+@{
+    ViewData["Title"] = "Masa Bildirimleri";
+}
+
+<div class="bg-surface-container-lowest p-4 sm:p-6 lg:p-8 rounded-card shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-container max-w-5xl mx-auto">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-on-surface">Masa Bildirimleri</h2>
+            <p class="text-[12px] text-on-surface-variant mt-1">Garson çağırma ve hesap isteme bildirimlerini yönetin</p>
+        </div>
+        <a asp-action="Index" class="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-100">
+            <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+            Sipariş Takip
+        </a>
+    </div>
+
+    <div class="space-y-3">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var bildirim in Model)
+            {
+                var okundu = bildirim.OkunduMu;
+                var tipClass = bildirim.BildirimTipi == "Hesap"
+                    ? "bg-green-50 text-green-700"
+                    : "bg-blue-50 text-blue-700";
+
+                <article class="flex flex-col gap-4 rounded-2xl border border-surface-container bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between @(okundu ? "opacity-50" : "")">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl @(bildirim.BildirimTipi == "Hesap" ? "bg-green-50 text-green-700" : "bg-blue-50 text-blue-700")">
+                            <span class="material-symbols-outlined text-2xl">@(bildirim.BildirimTipi == "Hesap" ? "payments" : "room_service")</span>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Masa No</p>
+                            <h3 class="text-2xl font-extrabold text-on-surface @(okundu ? "line-through" : "")">@bildirim.MasaNo</h3>
+                            <div class="mt-2 flex flex-wrap items-center gap-2">
+                                <span class="rounded-full px-3 py-1 text-[12px] font-bold @tipClass">@bildirim.BildirimTipi</span>
+                                <span class="text-[12px] font-semibold text-on-surface-variant">@(bildirim.Sube?.SubeAdi ?? "Şube")</span>
+                            </div>
+                            <p class="mt-2 text-[13px] text-on-surface-variant">
+                                @bildirim.OlusturulmaTarihi.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap justify-end gap-2">
+                        @if (!okundu)
+                        {
+                            <form asp-action="BildirimOkundu" method="post" class="m-0">
+                                <input type="hidden" name="id" value="@bildirim.Id" />
+                                <button type="submit" class="rounded-xl bg-green-50 px-4 py-2 text-sm font-bold text-green-700 hover:bg-green-100">Okundu</button>
+                            </form>
+                        }
+
+                        <form asp-action="BildirimSil" method="post" class="m-0 delete-confirm-form" data-message="Bu masa bildirimi silinecek.">
+                            <input type="hidden" name="id" value="@bildirim.Id" />
+                            <button type="submit" class="rounded-xl bg-red-50 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-100">Sil</button>
+                        </form>
+                    </div>
+                </article>
+            }
+        }
+        else
+        {
+            <div class="text-center py-14 px-6 bg-surface-container-lowest border border-dashed border-outline-variant rounded-2xl">
+                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-primary">
+                    <span class="material-symbols-outlined text-4xl">notifications</span>
+                </div>
+                <h3 class="text-lg font-bold text-on-surface">Henüz masa bildirimi yok</h3>
+                <p class="mt-2 text-sm text-on-surface-variant">Müşteriler Garson Çağır veya Hesap İste butonlarını kullandığında burada görünecek.</p>
+            </div>
+        }
+    </div>
+</div>

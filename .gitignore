@@ -1,0 +1,19 @@
+# Derleme çıktıları
+bin/
+obj/
+
+# IDE ve işletim sistemi dosyaları
+.idea/
+.vs/
+.vscode/
+*.user
+*.suo
+.DS_Store
+
+# Kullanıcıların yüklediği görseller (eski sürümden kalma, artık veritabanında tutuluyor)
+wwwroot/img/urunler/
+wwwroot/img/logolar/
+
+# Yerel gizli ayarlar
+appsettings.*.local.json
+.env

@@ -1,0 +1,195 @@
+@model SmartMenu.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "Profil Ayarları";
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6 mt-2">
+        <h2 class="text-2xl font-bold text-on-surface">Profil Ayarları</h2>
+        <p class="text-[13px] text-on-surface-variant">Marka bilgilerinizi ve giriş şifrenizi güncelleyin</p>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="mb-5 rounded-xl bg-green-50 px-4 py-3 text-green-700 text-sm font-semibold">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="mb-5 rounded-xl bg-red-50 px-4 py-3 text-error text-sm font-semibold">
+            @TempData["Error"]
+        </div>
+    }
+
+    @* Marka logosu: QR kodun ortasında ve basılan masa kartında kullanılır. *@
+    <div class="bg-surface-container-lowest p-6 lg:p-8 rounded-card shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-container mb-6">
+        <h3 class="text-base font-bold text-on-surface">Marka Logosu</h3>
+        <p class="mt-1 text-[13px] leading-5 text-on-surface-variant">
+            Logonuz QR kodun ortasında ve yazdırdığınız masa kartlarında görünür.
+            En iyi sonuç için kare oranlı, arka planı sade bir görsel yükleyin.
+            JPG, PNG veya WEBP · en fazla 2 MB.
+        </p>
+
+        <div class="mt-5 flex flex-col sm:flex-row sm:items-center gap-5">
+            <div class="w-24 h-24 shrink-0 rounded-2xl border border-outline-variant bg-white flex items-center justify-center overflow-hidden">
+                @if (!string.IsNullOrWhiteSpace(Model.LogoUrl))
+                {
+                    <img id="logoOnizleme" src="@Model.LogoUrl" alt="Marka logosu" class="w-full h-full object-contain" />
+                    <span id="logoPlaceholder" class="material-symbols-outlined text-[32px] text-on-surface-variant hidden">add_photo_alternate</span>
+                }
+                else
+                {
+                    <img id="logoOnizleme" alt="Marka logosu" class="w-full h-full object-contain hidden" />
+                    <span id="logoPlaceholder" class="material-symbols-outlined text-[32px] text-on-surface-variant">add_photo_alternate</span>
+                }
+            </div>
+
+            <div class="flex-1 min-w-0">
+                <form asp-action="LogoYukle" method="post" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-3 sm:items-center">
+                    <input type="file" name="logo" id="logoSecici" accept="image/jpeg,image/png,image/webp" required
+                           class="flex-1 min-w-0 text-[13px] text-on-surface-variant file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-[13px] file:font-bold file:bg-surface-container file:text-on-surface hover:file:bg-surface-container-high file:cursor-pointer" />
+                    <button type="submit" id="logoYukleBtn" class="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-[13px] font-bold text-white hover:bg-blue-700 transition-colors active:scale-95 disabled:opacity-50">
+                        <span class="material-symbols-outlined text-[18px]">upload</span>
+                        Yükle
+                    </button>
+                </form>
+
+                <p id="logoBilgi" class="mt-2 text-[12px] text-on-surface-variant hidden"></p>
+
+                @if (!string.IsNullOrWhiteSpace(Model.LogoUrl))
+                {
+                    <form asp-action="LogoSil" method="post" class="mt-3 delete-confirm-form"
+                          data-message="Logonuz kaldırılacak ve QR kodunda yeniden markanızın baş harfleri kullanılacak.">
+                        <button type="submit" class="text-[12px] font-bold text-error hover:underline">
+                            Logoyu kaldır
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-surface-container-lowest p-6 lg:p-8 rounded-card shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-container">
+        <form asp-action="Index" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-error text-sm mb-6 p-4 bg-red-50 rounded-xl"></div>
+
+            <div class="space-y-6">
+                <div>
+                    <label asp-for="Ad" class="block text-[13px] font-semibold text-on-surface-variant mb-2">Marka Adı</label>
+                    <input asp-for="Ad" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all" />
+                    <span asp-validation-for="Ad" class="text-error text-[12px] mt-1 block font-medium"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Email" class="block text-[13px] font-semibold text-on-surface-variant mb-2">E-posta</label>
+                    <input asp-for="Email" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all" />
+                    <span asp-validation-for="Email" class="text-error text-[12px] mt-1 block font-medium"></span>
+                </div>
+
+                <div>
+                    <label asp-for="YeniSifre" class="block text-[13px] font-semibold text-on-surface-variant mb-2">Yeni Şifre</label>
+                    <input asp-for="YeniSifre" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all" placeholder="Boş bırakırsanız mevcut şifre korunur" />
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-surface-container">
+                <button type="submit" class="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-md active:scale-95 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">save</span> Profili Güncelle
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        // Logo seçilince sunucuya göndermeden önce tarayıcıda küçültülür.
+        //
+        // Neden kırpma değil de küçültme: logolar çoğunlukla kare değildir (yatay yazı markaları),
+        // 1:1 kırpmak logoyu keserdi. QR kodunun ortasına ve masa kartına zaten oranı korunarak sığdırılıyor.
+        //
+        // Neden PNG: JPEG'in alfa kanalı yoktur; şeffaf arka planlı bir logo JPEG'e çevrilseydi
+        // şeffaf alanlar siyaha dönerdi ve QR'ın ortasında siyah bir kutu oluşurdu.
+        //
+        // Ek fayda: görsel canvas üzerinden yeniden kodlandığı için dosyanın içine gizlenmiş
+        // zararlı veri bu işlemde yok olur. (Sunucudaki format ve boyut doğrulaması yine de devrede.)
+        (function () {
+            const EN_UZUN_KENAR = 512;
+
+            const secici = document.getElementById('logoSecici');
+            const yukleBtn = document.getElementById('logoYukleBtn');
+            const onizleme = document.getElementById('logoOnizleme');
+            const placeholder = document.getElementById('logoPlaceholder');
+            const bilgi = document.getElementById('logoBilgi');
+
+            if (!secici) return;
+
+            function boyutMetni(bayt) {
+                return bayt >= 1024 * 1024
+                    ? (bayt / (1024 * 1024)).toFixed(1) + ' MB'
+                    : Math.round(bayt / 1024) + ' KB';
+            }
+
+            secici.addEventListener('change', function () {
+                const dosya = secici.files && secici.files[0];
+                if (!dosya) return;
+
+                const orijinalBoyut = dosya.size;
+                yukleBtn.disabled = true;
+
+                const okuyucu = new FileReader();
+                okuyucu.onload = function (e) {
+                    const gorsel = new Image();
+
+                    gorsel.onload = function () {
+                        // Oran korunarak en uzun kenar 512px'e indirilir. Zaten küçükse büyütülmez.
+                        const olcek = Math.min(1, EN_UZUN_KENAR / Math.max(gorsel.width, gorsel.height));
+                        const genislik = Math.round(gorsel.width * olcek);
+                        const yukseklik = Math.round(gorsel.height * olcek);
+
+                        const tuval = document.createElement('canvas');
+                        tuval.width = genislik;
+                        tuval.height = yukseklik;
+                        tuval.getContext('2d').drawImage(gorsel, 0, 0, genislik, yukseklik);
+
+                        tuval.toBlob(function (blob) {
+                            if (!blob) { yukleBtn.disabled = false; return; }
+
+                            const yeniDosya = new File([blob], 'logo.png', { type: 'image/png' });
+
+                            // İşlenmiş dosyayı input'a geri yazıyoruz; sunucuya bu hali gidecek.
+                            const aktarim = new DataTransfer();
+                            aktarim.items.add(yeniDosya);
+                            secici.files = aktarim.files;
+
+                            if (onizleme) {
+                                onizleme.src = tuval.toDataURL('image/png');
+                                onizleme.classList.remove('hidden');
+                            }
+                            if (placeholder) placeholder.classList.add('hidden');
+
+                            if (bilgi) {
+                                bilgi.textContent = `${gorsel.width}×${gorsel.height} → ${genislik}×${yukseklik} · `
+                                    + `${boyutMetni(orijinalBoyut)} → ${boyutMetni(yeniDosya.size)}`;
+                                bilgi.classList.remove('hidden');
+                            }
+
+                            yukleBtn.disabled = false;
+                        }, 'image/png');
+                    };
+
+                    // Görsel bozuksa dosyayı olduğu gibi bırakıyoruz; sunucu tarafı zaten reddedecek.
+                    gorsel.onerror = function () { yukleBtn.disabled = false; };
+                    gorsel.src = e.target.result;
+                };
+
+                okuyucu.onerror = function () { yukleBtn.disabled = false; };
+                okuyucu.readAsDataURL(dosya);
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,30 @@
+@model SmartMenu.Models.Kategori
+@{ 
+    ViewData["Title"] = "Kategori Sil"; 
+}
+
+<div class="max-w-xl mx-auto mt-10">
+    <div class="bg-surface-container-lowest p-8 rounded-card shadow-[0_10px_40px_rgba(255,59,48,0.08)] border-2 border-red-50 text-center">
+        <div class="w-20 h-20 bg-red-50 text-error rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+            <span class="material-symbols-outlined text-4xl">warning</span>
+        </div>
+
+        <h2 class="text-2xl font-bold text-on-surface mb-3">Emin misiniz?</h2>
+        <p class="text-on-surface-variant text-[15px] mb-8 leading-relaxed">
+            <span class="font-bold text-on-surface">"@Model.Ad"</span> isimli kategoriyi silmek üzeresiniz. Bu işlem <span class="text-error font-semibold underline">geri alınamaz</span> ve bu kategoriye bağlı ürünler etkilenebilir.
+        </p>
+
+        <form asp-action="Delete" class="delete-confirm-form" data-message="@Model.Ad adlı kategoriyi kalıcı olarak silmek üzeresiniz. Bu işlem geri alınamaz.">
+            <input type="hidden" asp-for="Id" />
+            
+            <div class="flex flex-col gap-3">
+                <button type="submit" class="w-full bg-error text-white py-3.5 rounded-2xl font-bold hover:bg-red-700 transition-all shadow-lg active:scale-[0.98]">
+                    Evet, Kalıcı Olarak Sil
+                </button>
+                <a asp-action="Index" class="w-full py-3 text-on-surface-variant font-semibold hover:bg-gray-100 rounded-2xl transition-colors">
+                    İptal Et ve Listeye Dön
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

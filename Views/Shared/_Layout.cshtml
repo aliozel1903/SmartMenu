@@ -1,0 +1,275 @@
+﻿@inject SmartMenu.Data.ApplicationDbContext LayoutDb
+@{
+    var okunmamisBildirimSayisi = 0;
+    var layoutCafeIdClaim = User.Claims.FirstOrDefault(c => c.Type == "CafeId")?.Value;
+
+    if (User.Identity?.IsAuthenticated == true && int.TryParse(layoutCafeIdClaim, out var layoutCafeId))
+    {
+        // Sol menüdeki kırmızı rozet sadece giriş yapan markanın okunmamış masa bildirimlerini sayar.
+        okunmamisBildirimSayisi = LayoutDb.MasaBildirimleri.Count(b => !b.OkunduMu && b.Sube != null && b.Sube.CafeId == layoutCafeId);
+    }
+}
+<!DOCTYPE html>
+<html class="light" lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SmartMenu</title>
+    <link rel="icon" type="image/png" href="~/img/smartmenu-logo.png" />
+    <link rel="apple-touch-icon" href="~/img/smartmenu-logo.png" />
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/SmartMenu.styles.css" asp-append-version="true" />
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#0058bc",
+                        "primary-container": "#0070eb",
+                        "background": "#f5f5f7",
+                        "surface": "#fcf8fb",
+                        "on-surface": "#1b1b1d",
+                        "on-surface-variant": "#414755",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#f0edef",
+                        "outline-variant": "#c1c6d7",
+                        "error": "#ba1a1a",
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "card": "20px"
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; min-height: max(884px, 100dvh); }
+        .card-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+
+<body class="bg-background text-on-surface min-h-screen pb-24 lg:pb-0 lg:pl-[260px] overflow-x-hidden">
+    
+    <aside class="fixed left-0 top-0 h-full w-[260px] border-r border-outline-variant bg-surface-container-lowest shadow-[0_4px_20px_rgba(0,0,0,0.05)] hidden lg:flex flex-col p-6 z-50">
+        <div class="mb-10">
+            <div class="flex items-center gap-3">
+                <img src="~/img/smartmenu-logo.png" alt="SmartMenu" class="w-10 h-10 rounded-xl object-cover shadow-sm" />
+                <h1 class="text-2xl font-bold text-primary tracking-tight">SmartMenu</h1>
+            </div>
+            <p class="text-[11px] font-semibold text-on-surface-variant uppercase tracking-widest mt-1">Yönetim Paneli</p>
+        </div>
+        
+        <nav class="flex-1 space-y-2">
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors rounded-xl" href="/Dashboard">
+                <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                <span class="text-[13px] font-medium">İstatistikler</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors rounded-xl" href="/Urunler">
+                <span class="material-symbols-outlined" data-icon="restaurant_menu">restaurant_menu</span>
+                <span class="text-[13px] font-medium">Ürünler</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors rounded-xl" href="/Siparisler">
+                <span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+                <span class="text-[13px] font-medium">Sipariş Takip</span>
+                @if (okunmamisBildirimSayisi > 0)
+                {
+                    <span class="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-extrabold text-white">@okunmamisBildirimSayisi</span>
+                }
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors rounded-xl" href="/Kasa">
+                <span class="material-symbols-outlined" data-icon="point_of_sale">point_of_sale</span>
+                <span class="text-[13px] font-medium">Kasa</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors rounded-xl" href="/Kategoriler">
+                <span class="material-symbols-outlined" data-icon="folder">folder</span>
+                <span class="text-[13px] font-medium">Kategoriler</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors rounded-xl" href="/Subeler">
+                <span class="material-symbols-outlined" data-icon="storefront">storefront</span>
+                <span class="text-[13px] font-medium">Şubelerim</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors rounded-xl" href="/Menu" target="_blank">
+                <span class="material-symbols-outlined" data-icon="qr_code_2">qr_code_2</span>
+                <span class="text-[13px] font-medium">Menüyü Görüntüle</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors rounded-xl" href="/Menu/QrCode">
+                <span class="material-symbols-outlined" data-icon="qr_code_scanner">qr_code_scanner</span>
+                <span class="text-[13px] font-medium">QR Kod Oluştur</span>
+            </a>
+        </nav>
+    </aside>
+
+    <header class="sticky top-0 z-40 w-full bg-surface-container-lowest/90 backdrop-blur-md px-4 py-4 lg:px-8 flex justify-between items-center shadow-sm">
+        <div>
+            <h2 class="text-lg md:text-xl font-semibold text-on-surface">Merhaba, Star Kafe</h2>
+            <p class="text-[11px] font-semibold text-on-surface-variant">Bugün neler yapıyoruz?</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <div class="text-right hidden sm:block">
+                <p class="text-[13px] font-medium text-on-surface">@User.Identity?.Name</p>
+                <p class="text-[11px] font-semibold text-on-surface-variant">Yönetici</p>
+            </div>
+            
+            <div class="relative">
+                <button onclick="toggleProfileMenu()" class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold shadow-md hover:bg-primary-container transition-all active:scale-95 focus:outline-none">
+                    S
+                </button>
+
+                <div id="profileMenu" class="hidden absolute right-0 mt-3 w-48 bg-surface-container-lowest rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-surface-container py-2 z-50 transform opacity-0 scale-95 transition-all duration-200 origin-top-right">
+                    <div class="px-4 py-3 border-b border-surface-container mb-1">
+                        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Hesap Ayarları</p>
+                    </div>
+                    <a href="/Profile" class="w-full px-4 py-2.5 text-on-surface hover:bg-surface-container flex items-center gap-3 font-semibold transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">manage_accounts</span> Profil Ayarları
+                    </a>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                        <button type="submit" class="w-full text-left px-4 py-2.5 text-error hover:bg-red-50 flex items-center gap-3 font-semibold transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">logout</span> Güvenli Çıkış
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto">
+        @RenderBody()
+    </main>
+
+    <nav class="fixed bottom-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-xl border-t border-surface-container rounded-t-2xl lg:hidden flex justify-around items-center pt-3 pb-8 px-2 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+        <a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors" href="/Dashboard">
+            <span class="material-symbols-outlined" data-icon="bar_chart">bar_chart</span>
+            <span class="text-[10px] font-medium">İstatistik</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors" href="/Urunler">
+            <span class="material-symbols-outlined" data-icon="restaurant_menu">restaurant_menu</span>
+            <span class="text-[10px] font-medium">Ürünler</span>
+        </a>
+        <a class="relative flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors" href="/Siparisler">
+            <span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+            <span class="text-[10px] font-medium">Sipariş</span>
+            @if (okunmamisBildirimSayisi > 0)
+            {
+                <span class="absolute -top-2 right-2 inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-extrabold text-white">@okunmamisBildirimSayisi</span>
+            }
+        </a>
+        <a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors" href="/Kasa">
+            <span class="material-symbols-outlined" data-icon="point_of_sale">point_of_sale</span>
+            <span class="text-[10px] font-medium">Kasa</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors" href="/Kategoriler">
+            <span class="material-symbols-outlined" data-icon="folder">folder</span>
+            <span class="text-[10px] font-medium">Kategoriler</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors" href="/Subeler">
+            <span class="material-symbols-outlined" data-icon="storefront">storefront</span>
+            <span class="text-[10px] font-medium">Şubeler</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors" href="/Menu" target="_blank">
+            <span class="material-symbols-outlined" data-icon="qr_code_2">qr_code_2</span>
+            <span class="text-[10px] font-medium">Menüm</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors" href="/Menu/QrCode">
+            <span class="material-symbols-outlined" data-icon="qr_code_scanner">qr_code_scanner</span>
+            <span class="text-[10px] font-medium">QR Kod</span>
+        </a>
+    </nav>
+
+    <script>
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profileMenu');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                setTimeout(() => {
+                    menu.classList.remove('opacity-0', 'scale-95');
+                    menu.classList.add('opacity-100', 'scale-100');
+                }, 10);
+            } else {
+                menu.classList.remove('opacity-100', 'scale-100');
+                menu.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    menu.classList.add('hidden');
+                }, 200);
+            }
+        }
+
+        // Tıklama dışı kapatma
+        document.addEventListener('click', function(event) {
+            const profileBtn = document.querySelector('button[onclick="toggleProfileMenu()"]');
+            const menu = document.getElementById('profileMenu');
+            if (profileBtn && menu && !profileBtn.contains(event.target) && !menu.contains(event.target) && !menu.classList.contains('hidden')) {
+                menu.classList.remove('opacity-100', 'scale-100');
+                menu.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => menu.classList.add('hidden'), 200);
+            }
+        });
+    </script>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        // Global SweetAlert2 ayarları: tüm delete formları aynı şık onay penceresini kullanır.
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('form.delete-confirm-form').forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+
+                    Swal.fire({
+                        title: 'Emin misiniz?',
+                        text: form.dataset.message || 'Bu işlem geri alınamaz.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Evet, Sil',
+                        cancelButtonText: 'Vazgeç',
+                        confirmButtonColor: '#ba1a1a',
+                        cancelButtonColor: '#6b7280',
+                        reverseButtons: true,
+                        customClass: {
+                            popup: 'rounded-2xl',
+                            confirmButton: 'rounded-xl',
+                            cancelButton: 'rounded-xl'
+                        }
+                    }).then(function (result) {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+
+            const successMessage = @Html.Raw(Json.Serialize(TempData["Success"]));
+            const errorMessage = @Html.Raw(Json.Serialize(TempData["Error"]));
+
+            // Controller'lardan gelen TempData mesajlarını sağ üstte toast olarak gösteriyoruz.
+            if (successMessage || errorMessage) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: successMessage ? 'success' : 'error',
+                    title: successMessage || errorMessage,
+                    showConfirmButton: false,
+                    timer: 2600,
+                    timerProgressBar: true,
+                    background: '#ffffff',
+                    color: '#1b1b1d'
+                });
+            }
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

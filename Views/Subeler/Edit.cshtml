@@ -1,0 +1,72 @@
+@model SmartMenu.Models.Sube
+@{
+    ViewData["Title"] = "Şube Düzenle";
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="flex items-center gap-4 mb-6 mt-2">
+        <a asp-action="Index" class="w-10 h-10 bg-surface-container-lowest border border-surface-container rounded-full flex items-center justify-center text-on-surface-variant hover:bg-gray-50 transition-colors shadow-sm">
+            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+        </a>
+        <div>
+            <h2 class="text-2xl font-bold text-on-surface">Şube Düzenle</h2>
+            <p class="text-[13px] text-on-surface-variant">@Model.SubeAdi bilgilerini güncelleyin</p>
+        </div>
+    </div>
+
+    <div class="bg-surface-container-lowest p-6 lg:p-8 rounded-card shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-container">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-error text-sm mb-6 p-4 bg-red-50 rounded-xl"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="space-y-6">
+                <div>
+                    <label asp-for="SubeAdi" class="block text-[13px] font-semibold text-on-surface-variant mb-2">Şube Adı</label>
+                    <input asp-for="SubeAdi" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all" />
+                    <span asp-validation-for="SubeAdi" class="text-error text-[12px] mt-1 block font-medium"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Telefon" class="block text-[13px] font-semibold text-on-surface-variant mb-2">Telefon</label>
+                    <input asp-for="Telefon" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all" />
+                </div>
+
+                <div>
+                    <label asp-for="Adres" class="block text-[13px] font-semibold text-on-surface-variant mb-2">Adres</label>
+                    <textarea asp-for="Adres" rows="3" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all resize-none"></textarea>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <label class="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-surface-container bg-surface-container-lowest p-4 shadow-sm">
+                        <div>
+                            <span class="block text-sm font-bold text-on-surface">Garson Çağır</span>
+                            <span class="mt-1 block text-[12px] leading-5 text-on-surface-variant">Müşteri menüsünde garson çağırma butonunu gösterir.</span>
+                        </div>
+                        @* Şube bazlı Garson Çağır ayarı; kapalıysa müşteri menüsünde buton hiç görünmez. *@
+                        <input asp-for="GarsonCagriAktif" type="checkbox" class="h-6 w-11 cursor-pointer rounded-full border-transparent bg-gray-200 text-primary focus:ring-primary/20" />
+                    </label>
+
+                    <label class="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-surface-container bg-surface-container-lowest p-4 shadow-sm">
+                        <div>
+                            <span class="block text-sm font-bold text-on-surface">Hesap İste</span>
+                            <span class="mt-1 block text-[12px] leading-5 text-on-surface-variant">Müşteri menüsünde hesap isteme butonunu gösterir.</span>
+                        </div>
+                        @* Şube bazlı Hesap İste ayarı; kapalıysa müşteri menüsünde buton hiç görünmez. *@
+                        <input asp-for="HesapIsteAktif" type="checkbox" class="h-6 w-11 cursor-pointer rounded-full border-transparent bg-gray-200 text-primary focus:ring-primary/20" />
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-surface-container">
+                <a asp-action="Index" class="px-5 py-2.5 text-on-surface-variant hover:bg-surface-container font-semibold rounded-xl transition-colors">İptal Et</a>
+                <button type="submit" class="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-md active:scale-95 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">save</span> Değişiklikleri Kaydet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

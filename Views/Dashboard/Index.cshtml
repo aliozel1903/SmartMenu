@@ -1,0 +1,119 @@
+@model SmartMenu.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "İstatistikler";
+}
+
+@* QR tarama sayısı normalin çok altına düşen şubeler için güvenlik uyarısı.
+   Sahte QR etiketi yapıştırma saldırısı sunucumuza hiç uğramadığı için,
+   onu ancak "beklenen trafiğin kaybolması" üzerinden fark edebiliyoruz. *@
+@if (Model.QrTaramaUyarilari.Any())
+{
+    <section class="mt-4 mb-8 rounded-card border border-amber-300 bg-amber-50 p-6">
+        <div class="flex items-start gap-4">
+            <div class="p-3 bg-amber-100 rounded-xl text-amber-700 shrink-0">
+                <span class="material-symbols-outlined">warning</span>
+            </div>
+            <div class="min-w-0 flex-1">
+                <h3 class="text-base font-bold text-amber-900">QR Tarama Uyarısı</h3>
+                <p class="mt-1 text-[13px] leading-5 text-amber-800">
+                    Aşağıdaki şubelerde dünkü QR taramaları normalin belirgin şekilde altında kaldı.
+                    Masalardaki QR kodlarının yerinde, okunabilir durumda ve üzerine başka bir etiket
+                    yapıştırılmamış olduğunu kontrol edin. Şüpheli bir durum varsa şubenin QR kodunu yenileyin.
+                </p>
+
+                <ul class="mt-4 space-y-2">
+                    @foreach (var uyari in Model.QrTaramaUyarilari)
+                    {
+                        <li class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/70 border border-amber-200 px-4 py-3">
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-amber-900 truncate">@uyari.SubeAdi</p>
+                                <p class="text-[12px] text-amber-800">
+                                    Dün <strong>@uyari.DunkuTarama</strong> tarama ·
+                                    normalde günde ortalama <strong>@uyari.NormalOrtalama</strong> ·
+                                    <strong>%@uyari.DususYuzdesi</strong> düşüş
+                                </p>
+                            </div>
+                            <a asp-controller="Menu" asp-action="QrCode" asp-route-subeId="@uyari.SubeId"
+                               class="shrink-0 inline-flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-[13px] font-bold text-white hover:bg-amber-700 transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">qr_code_2</span>
+                                QR Kodunu İncele
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </section>
+}
+
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-4">
+    <div class="bg-surface-container-lowest p-6 rounded-card shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-container flex justify-between items-start">
+        <div>
+            <p class="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Toplam Ürün</p>
+            <h3 class="text-3xl font-bold text-on-surface">@Model.ToplamUrun</h3>
+        </div>
+        <div class="p-3 bg-blue-50 rounded-xl text-primary">
+            <span class="material-symbols-outlined">restaurant</span>
+        </div>
+    </div>
+
+    <div class="bg-surface-container-lowest p-6 rounded-card shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-container flex justify-between items-start">
+        <div>
+            <p class="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Aktif Kategoriler</p>
+            <h3 class="text-3xl font-bold text-on-surface">
+                @Model.ToplamKategori
+            </h3>
+        </div>
+        <div class="p-3 bg-gray-100 rounded-xl text-gray-500">
+            <span class="material-symbols-outlined">category</span>
+        </div>
+    </div>
+
+    <div class="bg-surface-container-lowest p-6 rounded-card shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-container flex justify-between items-start">
+        <div>
+            <p class="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Menü Ziyareti</p>
+            <h3 class="text-3xl font-bold text-on-surface">@Model.BugunZiyaret</h3>
+        </div>
+        <div class="p-3 bg-blue-50 rounded-xl text-primary">
+            <span class="material-symbols-outlined">visibility</span>
+        </div>
+    </div>
+</section>
+
+<section class="bg-surface-container-lowest p-8 rounded-card shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-container mb-8">
+    <div class="flex justify-between items-center mb-8">
+        <h3 class="text-xl font-semibold text-on-surface">Haftalık Menü Trafiği</h3>
+    </div>
+    <div class="w-full h-80">
+        <canvas id="trafficChart"></canvas>
+    </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('trafficChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: @Html.Raw(Json.Serialize(Model.HaftalikZiyaretEtiketleri)),
+            datasets: [{
+                label: 'Ziyaretçi Sayısı',
+                data: @Html.Raw(Json.Serialize(Model.HaftalikZiyaretVerileri)),
+                borderColor: '#0061A4',
+                backgroundColor: 'rgba(0, 97, 164, 0.1)',
+                fill: true,
+                tension: 0.4, // Çizgiyi Apple tarzı yumuşatır
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { display: false }, border: { display: false } },
+                x: { grid: { display: false }, border: { display: false } }
+            }
+        }
+    });
+</script>

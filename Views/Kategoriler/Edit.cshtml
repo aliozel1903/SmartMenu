@@ -1,0 +1,62 @@
+@model SmartMenu.Models.Kategori
+@{ 
+    ViewData["Title"] = "Kategori Düzenle"; 
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="flex items-center gap-4 mb-6 mt-2">
+        <a asp-action="Index" class="w-10 h-10 bg-surface-container-lowest border border-surface-container rounded-full flex items-center justify-center text-on-surface-variant hover:bg-gray-50 transition-colors shadow-sm">
+            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+        </a>
+        <div>
+            <h2 class="text-2xl font-bold text-on-surface">Kategoriyi Düzenle</h2>
+            <p class="text-[13px] text-primary font-semibold mt-0.5">@Model.Ad <span class="text-on-surface-variant font-normal">kategorisini güncelliyorsunuz</span></p>
+        </div>
+    </div>
+
+    <div class="bg-surface-container-lowest p-6 lg:p-8 rounded-card shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-container">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-error text-sm mb-6 p-4 bg-red-50 rounded-xl hidden"></div>
+            
+            <input type="hidden" asp-for="Id" />
+
+            <div class="space-y-6">
+                <div>
+                    <label asp-for="Ad" class="block text-[13px] font-semibold text-on-surface-variant mb-2">Kategori Adı</label>
+                    <input asp-for="Ad" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all placeholder:text-gray-400" />
+                    <span asp-validation-for="Ad" class="text-error text-[12px] mt-1 block font-medium"></span>
+                </div>
+
+
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-gray-50/50 border border-gray-100 rounded-2xl mt-4">
+                    
+                    <div>
+                        <label asp-for="Sira" class="block text-[13px] font-semibold text-on-surface-variant mb-2">Görünüm Sırası</label>
+                        <input asp-for="Sira" type="number" class="w-full bg-surface-container-lowest py-3 px-4 rounded-xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all" />
+                        <span asp-validation-for="Sira" class="text-error text-[12px] mt-1 block font-medium"></span>
+                    </div>
+
+                    <div class="flex flex-col justify-center pt-2 md:pt-6">
+                        <label class="relative inline-flex items-center cursor-pointer group">
+                            <input type="checkbox" asp-for="AktifMi" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 group-hover:shadow-md transition-shadow"></div>
+                            <span class="ml-3 text-[14px] font-semibold text-on-surface">Menüde Göster</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-surface-container">
+                <a asp-action="Index" class="px-5 py-2.5 text-on-surface-variant hover:bg-surface-container font-semibold rounded-xl transition-colors">İptal Et</a>
+                <button type="submit" class="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-md active:scale-95 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">update</span> Değişiklikleri Kaydet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

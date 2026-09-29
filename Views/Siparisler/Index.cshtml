@@ -1,0 +1,168 @@
+@model IEnumerable<SmartMenu.Models.Siparis>
+@{
+    ViewData["Title"] = "Siparişler";
+    var culture = new System.Globalization.CultureInfo("tr-TR");
+}
+
+<div class="bg-surface-container-lowest p-4 sm:p-6 lg:p-8 rounded-card shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-container max-w-5xl mx-auto">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-on-surface">Siparişler</h2>
+            <p class="text-[12px] text-on-surface-variant mt-1">Şubelerinizden gelen masa siparişlerini takip edin</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a asp-action="Bildirimler" class="inline-flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 hover:bg-red-100">
+                <span class="material-symbols-outlined text-[20px]">notifications</span>
+                Bildirimler
+            </a>
+            <a href="/Kasa" class="inline-flex items-center gap-2 rounded-xl bg-green-50 px-4 py-2.5 text-sm font-bold text-green-700 hover:bg-green-100">
+                <span class="material-symbols-outlined text-[20px]">point_of_sale</span>
+                Kasa
+            </a>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var siparis in Model)
+            {
+                var isTamamlandi = siparis.Durum == "Tamamlandı";
+                var statusClass = siparis.Durum switch
+                {
+                    "Bekliyor" => "bg-amber-50 text-amber-700",
+                    "Hazırlanıyor" => "bg-blue-50 text-blue-700",
+                    "Tamamlandı" => "bg-green-50 text-green-700",
+                    "İptal" => "bg-red-50 text-red-700",
+                    _ => "bg-gray-100 text-gray-600"
+                };
+                var detailsId = $"siparis-detay-{siparis.Id}";
+
+                <article class="rounded-2xl border border-surface-container bg-white p-4 shadow-sm @(isTamamlandi ? "opacity-50" : "")">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Masa</p>
+                            <h3 class="text-2xl font-extrabold text-on-surface @(isTamamlandi ? "line-through" : "")">@siparis.MasaNo</h3>
+                            <div class="mt-2 flex flex-wrap items-center gap-2">
+                                <span class="text-sm font-bold text-on-surface @(isTamamlandi ? "line-through" : "")">Sipariş #@siparis.Id</span>
+                                <span class="rounded-full px-3 py-1 text-[12px] font-bold @statusClass">@siparis.Durum</span>
+                            </div>
+                            <p class="mt-1 text-[13px] text-on-surface-variant">
+                                @(siparis.Sube?.SubeAdi ?? "Şube") · @siparis.SiparisTarihi.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                            </p>
+                        </div>
+
+                        <div class="text-left sm:text-right">
+                            <p class="text-[12px] font-bold uppercase tracking-wider text-on-surface-variant">Toplam</p>
+                            <p class="text-xl font-extrabold text-primary">@siparis.ToplamTutar.ToString("C", culture)</p>
+                        </div>
+                    </div>
+
+                    @if (isTamamlandi)
+                    {
+                        <button type="button"
+                                class="toggle-details mt-4 inline-flex items-center gap-2 rounded-xl bg-surface-container px-4 py-2 text-sm font-bold text-on-surface hover:bg-gray-200"
+                                data-target="@detailsId">
+                            <span class="material-symbols-outlined text-[18px]">visibility</span>
+                            Detayları Gör
+                        </button>
+                    }
+
+                    <div id="@detailsId" class="@(isTamamlandi ? "hidden" : "") mt-4 divide-y divide-surface-container rounded-xl bg-surface-container-lowest">
+                        @foreach (var detay in siparis.Detaylar)
+                        {
+                            <div class="flex items-center justify-between gap-3 px-4 py-3">
+                                <div>
+                                    <p class="text-sm font-bold text-on-surface">@detay.Urun?.Ad</p>
+                                    <p class="text-xs text-on-surface-variant">@detay.Adet adet x @detay.BirimFiyat.ToString("C", culture)</p>
+                                </div>
+                                <p class="text-sm font-bold text-on-surface">@((detay.Adet * detay.BirimFiyat).ToString("C", culture))</p>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap justify-end gap-2">
+                        @if (siparis.Durum != "Hazırlanıyor" && siparis.Durum != "Tamamlandı" && siparis.Durum != "İptal")
+                        {
+                            <form asp-action="DurumGuncelle" method="post" class="m-0">
+                                <input type="hidden" name="id" value="@siparis.Id" />
+                                <input type="hidden" name="durum" value="Hazırlanıyor" />
+                                <button type="submit" class="rounded-xl bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100">Hazırlanıyor</button>
+                            </form>
+                        }
+
+                        @if (siparis.Durum != "Tamamlandı" && siparis.Durum != "İptal")
+                        {
+                            <form asp-action="DurumGuncelle" method="post" class="m-0">
+                                <input type="hidden" name="id" value="@siparis.Id" />
+                                <input type="hidden" name="durum" value="Tamamlandı" />
+                                <button type="submit" class="rounded-xl bg-green-50 px-4 py-2 text-sm font-bold text-green-700 hover:bg-green-100">Tamamlandı</button>
+                            </form>
+                        }
+
+                        @if (siparis.Durum != "İptal")
+                        {
+                            <form asp-action="IptalEt" method="post" class="m-0 delete-confirm-form" data-message="Bu sipariş iptal durumuna alınacak.">
+                                <input type="hidden" name="id" value="@siparis.Id" />
+                                <button type="submit" class="rounded-xl bg-red-50 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-100">Sil</button>
+                            </form>
+                        }
+                    </div>
+                </article>
+            }
+        }
+        else
+        {
+            <div class="text-center py-14 px-6 bg-surface-container-lowest border border-dashed border-outline-variant rounded-2xl">
+                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-primary">
+                    <span class="material-symbols-outlined text-4xl">receipt_long</span>
+                </div>
+                <h3 class="text-lg font-bold text-on-surface">Henüz sipariş gelmedi</h3>
+                <p class="mt-2 text-sm text-on-surface-variant">Müşteriler QR menüden sipariş verdiğinde burada görünecek.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Tamamlanan siparişlerde ürün listesini kapalı tutup gerektiğinde açıyoruz.
+        document.querySelectorAll('.toggle-details').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const target = document.getElementById(button.dataset.target);
+                if (!target) return;
+
+                target.classList.toggle('hidden');
+                button.querySelector('.material-symbols-outlined').textContent = target.classList.contains('hidden') ? 'visibility' : 'visibility_off';
+                button.lastChild.textContent = target.classList.contains('hidden') ? ' Detayları Gör' : ' Detayları Gizle';
+            });
+        });
+
+        // Mutfak ekranı yeni siparişleri görmek için kendini düzenli aralıklarla yeniler.
+        // Personel o an ekranla etkileşimdeyse (onay penceresi açık ya da detay açılmış) yenileme ertelenir,
+        // yoksa tıklamak üzere olduğu buton elinden kayardı.
+        (function () {
+            const YENILEME_ARALIGI_MS = 20000;
+
+            function etkilesimVarMi() {
+                const onayPenceresiAcik = window.Swal && Swal.isVisible();
+                const detayAcik = Array.from(document.querySelectorAll('.toggle-details'))
+                    .some(b => { const t = document.getElementById(b.dataset.target); return t && !t.classList.contains('hidden'); });
+                return onayPenceresiAcik || detayAcik;
+            }
+
+            setInterval(function () {
+                // Sekme arka plandaysa sunucuyu boşuna yormuyoruz; öne gelince aşağıda hemen yenileniyor.
+                if (!document.hidden && !etkilesimVarMi()) {
+                    location.reload();
+                }
+            }, YENILEME_ARALIGI_MS);
+
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden && !etkilesimVarMi()) {
+                    location.reload();
+                }
+            });
+        })();
+    </script>
+}

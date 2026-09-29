@@ -1,0 +1,83 @@
+@model IEnumerable<SmartMenu.Models.Sube>
+@{
+    ViewData["Title"] = "Şubelerim";
+}
+
+<div class="bg-surface-container-lowest p-4 sm:p-6 lg:p-8 rounded-card shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-container max-w-4xl mx-auto">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-on-surface">Şubelerim</h2>
+            <p class="text-[12px] text-on-surface-variant mt-1">Markanıza bağlı franchise şubelerini yönetin</p>
+        </div>
+        <a asp-action="Create" class="w-full sm:w-auto bg-primary text-white px-5 py-3 sm:py-2.5 rounded-xl text-[14px] font-semibold hover:bg-primary-container transition-colors flex items-center justify-center gap-2 shadow-md active:scale-95">
+            <span class="material-symbols-outlined text-[20px]">add</span> Yeni Şube
+        </a>
+    </div>
+
+    <div class="space-y-3">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var sube in Model)
+            {
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-surface-container rounded-2xl hover:bg-gray-50 transition-colors group gap-3 sm:gap-0">
+                    <div class="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                        <div class="flex-shrink-0 w-12 h-12 bg-blue-50 text-primary rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined text-2xl">storefront</span>
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-semibold text-on-surface text-[15px] sm:text-[16px] truncate">@sube.SubeAdi</h3>
+                            <p class="text-[12px] text-on-surface-variant truncate flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">location_on</span>
+                                @(!string.IsNullOrEmpty(sube.Adres) ? sube.Adres : "Adres belirtilmemiş")
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto border-t sm:border-none border-gray-100 pt-3 sm:pt-0 mt-1 sm:mt-0 gap-4 sm:gap-4">
+                        <div class="text-[12px] text-on-surface-variant hidden md:block">
+                            <span class="font-medium">Kayıt:</span> @sube.OlusturulmaTarihi.ToString("dd.MM.yyyy")
+                        </div>
+
+                        <form asp-action="ToggleSiparisAktif" asp-route-id="@sube.Id" method="post" class="m-0">
+                            @* Sipariş kilidi: açıkken müşteri sepeti kullanabilir, kapalıyken sadece menü görüntülenir. *@
+                            <button type="submit"
+                                    class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-[12px] font-bold transition-colors @(sube.IsSiparisAktif ? "bg-green-50 text-green-700 hover:bg-green-100" : "bg-red-50 text-red-700 hover:bg-red-100")"
+                                    title="Online siparişi aç/kapat">
+                                <span class="material-symbols-outlined text-[18px]">@(sube.IsSiparisAktif ? "toggle_on" : "toggle_off")</span>
+                                @(sube.IsSiparisAktif ? "Sipariş Açık" : "Sipariş Kapalı")
+                            </button>
+                        </form>
+
+                        <div class="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                            <a asp-controller="Menu" asp-action="QrCode" asp-route-subeId="@sube.Id" class="text-primary hover:bg-blue-50 p-2 rounded-lg transition-colors" title="QR Üret">
+                                <span class="material-symbols-outlined text-[20px]">qr_code_2</span>
+                            </a>
+                            <a asp-action="Edit" asp-route-id="@sube.Id" class="text-primary hover:bg-blue-50 p-2 rounded-lg transition-colors" title="Düzenle">
+                                <span class="material-symbols-outlined text-[20px]">edit</span>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@sube.Id" method="post" class="m-0 delete-confirm-form" data-message="@sube.SubeAdi adlı şubeyi silmek üzeresiniz. Bu işlem geri alınamaz.">
+                                <button type="submit" class="text-error hover:bg-red-50 p-2 rounded-lg transition-colors" title="Sil">
+                                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center py-14 px-6 bg-surface-container-lowest border border-dashed border-outline-variant rounded-2xl">
+                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-primary">
+                    <span class="material-symbols-outlined text-4xl">storefront</span>
+                </div>
+                <h3 class="text-lg font-bold text-on-surface">Henüz hiç şube eklemediniz</h3>
+                <p class="mt-2 text-sm text-on-surface-variant">QR kod üretmek ve franchise yapınızı yönetmek için ilk şubenizi oluşturun.</p>
+                <a asp-action="Create" class="inline-flex items-center justify-center gap-2 mt-5 bg-primary text-white px-5 py-3 rounded-xl text-sm font-bold hover:bg-primary-container transition-colors shadow-md">
+                    <span class="material-symbols-outlined text-[18px]">add</span> İlk Şubeyi Ekle
+                </a>
+            </div>
+        }
+    </div>
+</div>

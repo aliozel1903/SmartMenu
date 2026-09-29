@@ -1,0 +1,116 @@
+@model IEnumerable<SmartMenu.Models.Urun>
+@{
+    ViewData["Title"] = "Ürün Yönetimi";
+}
+
+<div class="bg-surface-container-lowest p-6 lg:p-8 rounded-card shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-surface-container max-w-3xl mx-auto">
+    
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-on-surface">Ürünler</h2>
+            <p class="text-[12px] text-on-surface-variant mt-1">Ürünlerinizi ve fiyatlarını yönetin</p>
+        </div>
+        <a asp-action="Create" class="w-full sm:w-auto bg-primary text-white px-5 py-3 sm:py-2.5 rounded-xl text-[14px] font-semibold hover:bg-primary-container transition-colors flex items-center justify-center gap-2 shadow-md active:scale-95">
+            <span class="material-symbols-outlined text-[20px]">add</span> Yeni Ürün
+        </a>
+    </div>
+
+    <div class="mb-6 relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+        <input id="urunSearchInput" type="text" placeholder="Ara..." class="w-full bg-surface-container py-3 pl-10 pr-4 rounded-xl border-none focus:ring-2 focus:ring-primary/50 text-[15px] outline-none transition-all">
+    </div>
+
+    <div class="space-y-3">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var urun in Model)
+            {
+                <div class="urun-list-item flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-surface-container rounded-2xl hover:bg-gray-50 transition-colors group gap-3 sm:gap-0" data-search="@($"{urun.Ad} {urun.Kategori?.Ad}".ToLower())">
+                    <div class="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                        <div class="flex-shrink-0 w-14 h-14 bg-surface-container rounded-xl flex items-center justify-center text-on-surface-variant overflow-hidden">
+                            @if (!string.IsNullOrEmpty(urun.ResimUrl))
+                            {
+                                <img src="@urun.ResimUrl" alt="@urun.Ad" class="w-full h-full object-cover" />
+                            }
+                            else
+                            {
+                                <span class="material-symbols-outlined text-3xl opacity-50">fastfood</span>
+                            }
+                        </div>
+                        
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <h3 class="font-semibold text-on-surface text-[15px] sm:text-[16px] truncate">@urun.Ad</h3>
+                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold @(urun.AktifMi ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700")">
+                                    @(urun.AktifMi ? "Aktif" : "Pasif")
+                                </span>
+                            </div>
+                            @if (urun.Kategori != null)
+                            {
+                                <p class="text-[12px] text-on-surface-variant truncate">@urun.Kategori.Ad</p>
+                            }
+                            else
+                            {
+                                <p class="text-[12px] text-on-surface-variant truncate">Kategorisiz</p>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto border-t sm:border-none border-gray-100 pt-3 sm:pt-0 mt-1 sm:mt-0 gap-4 sm:gap-6">
+                        <span class="font-bold text-on-surface text-[15px] sm:text-[16px]">₺@urun.Fiyat.ToString("N2")</span>
+                        
+                        <div class="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                            <form asp-action="ToggleAktif" asp-route-id="@urun.Id" method="post" class="m-0">
+                                <button type="submit" class="@(urun.AktifMi ? "text-green-700 hover:bg-green-50" : "text-red-700 hover:bg-red-50") p-2 rounded-lg transition-colors" title="Aktif/Pasif Değiştir">
+                                    <span class="material-symbols-outlined text-[20px]">@(urun.AktifMi ? "toggle_on" : "toggle_off")</span>
+                                </button>
+                            </form>
+                            <a asp-action="Edit" asp-route-id="@urun.Id" class="text-primary hover:bg-blue-50 p-2 rounded-lg transition-colors" title="Düzenle">
+                                <span class="material-symbols-outlined text-[20px]">edit</span>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@urun.Id" method="post" class="m-0 delete-confirm-form" data-message="@urun.Ad adlı ürünü silmek üzeresiniz. Bu işlem geri alınamaz.">
+                                <button type="submit" class="text-error hover:bg-red-50 p-2 rounded-lg transition-colors" title="Sil">
+                                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center py-14 px-6 bg-surface-container-lowest border border-dashed border-outline-variant rounded-2xl">
+                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-primary">
+                    <span class="material-symbols-outlined text-4xl">inventory_2</span>
+                </div>
+                <h3 class="text-lg font-bold text-on-surface">Henüz hiç ürün eklemediniz</h3>
+                <p class="mt-2 text-sm text-on-surface-variant">Menünüzü oluşturmaya ilk ürününüzü ekleyerek başlayın.</p>
+                <a asp-action="Create" class="inline-flex items-center justify-center gap-2 mt-5 bg-primary text-white px-5 py-3 rounded-xl text-sm font-bold hover:bg-primary-container transition-colors shadow-md">
+                    <span class="material-symbols-outlined text-[18px]">add</span> İlk Ürünü Ekle
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    // Ürün yönetimi araması: Ürün adı ve kategori adına göre ekranda anlık filtreleme yapar.
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('urunSearchInput');
+        const urunItems = document.querySelectorAll('.urun-list-item');
+
+        if (!searchInput) {
+            return;
+        }
+
+        searchInput.addEventListener('input', function () {
+            const query = this.value.trim().toLowerCase();
+
+            urunItems.forEach(function (item) {
+                const haystack = item.dataset.search || '';
+                item.classList.toggle('hidden', query.length > 0 && !haystack.includes(query));
+            });
+        });
+    });
+</script>
