@@ -18,10 +18,21 @@ builder.Services.AddAuthentication("AdminCookies")
         options.ExpireTimeSpan = TimeSpan.FromDays(1); // 1 gün boyunca girişi hatırla
     });
 
-// PostgreSQL bağlantısı. Canlı ortamda bağlantı dizesi appsettings.json'dan değil,
-// "ConnectionStrings__DefaultConnection" ortam değişkeninden gelir; şifre koda hiç girmez.
+// PostgreSQL bağlantısı. Bağlantı dizesi (şifre dahil) depoda hiçbir dosyada tutulmaz:
+//  - Geliştirmede: dotnet user-secrets (bilgisayara özel, proje klasörünün dışında)
+//  - Canlı ortamda: "ConnectionStrings__DefaultConnection" ortam değişkeni
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Veritabanı bağlantısı tanımlı değil. Geliştirmede: " +
+        "dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"Host=localhost;Database=SmartMenuDb;Username=...;Password=...\" " +
+        "Canlı ortamda: ConnectionStrings__DefaultConnection ortam değişkenini tanımlayın.");
+}
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 builder.Services.AddRouting(options => options.LowercaseUrls = true); // URL'leri küçük harfe dönüştür
 
 // Giriş çerezlerini şifreleyen anahtarlar veritabanında tutulur (bkz. ApplicationDbContext).
