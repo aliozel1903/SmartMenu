@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartMenu.Models
 {
@@ -19,5 +20,16 @@ namespace SmartMenu.Models
         public byte[] Veri { get; set; } = Array.Empty<byte>();
 
         public DateTime OlusturulmaTarihi { get; set; } = DateTime.UtcNow;
+
+        // Görselin boyutu (bayt). Kota hesaplarken büyük Veri sütununu okumamak için ayrıca tutulur.
+        public int Boyut { get; set; }
+
+        // Görseli yükleyen kafe. Kafe silinince görselleri de silinir (bkz. ApplicationDbContext);
+        // böylece kötüye kullanılan bir hesap silindiğinde kapladığı yer de geri kazanılır.
+        // Bu alan eklenmeden önce yüklenmiş görsellerde boştur.
+        public int? CafeId { get; set; }
+
+        [ForeignKey("CafeId")]
+        public Cafe? Cafe { get; set; }
     }
 }

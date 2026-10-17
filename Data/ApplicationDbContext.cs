@@ -74,6 +74,13 @@ namespace SmartMenu.Data
             modelBuilder.Entity<MenuZiyaret>()
                 .HasIndex(z => new { z.CafeId, z.SubeId, z.Tarih });
 
+            // Kafe silinince yüklediği görseller de silinir.
+            modelBuilder.Entity<Gorsel>()
+                .HasOne(g => g.Cafe)
+                .WithMany()
+                .HasForeignKey(g => g.CafeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Şube silinirse o şubeye ait masa bildirimleri de temizlenir.
             modelBuilder.Entity<MasaBildirim>()
                 .HasOne(b => b.Sube)

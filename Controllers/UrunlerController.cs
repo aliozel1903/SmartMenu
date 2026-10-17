@@ -70,7 +70,7 @@ namespace SmartMenu.Controllers
             if (ModelState.IsValid && resim != null)
             {
                 // Boyut, uzantı ve gerçek dosya imzası kontrolü servis içinde yapılır.
-                var (basarili, yol, hata) = await _resimYukleyici.YukleAsync(resim);
+                var (basarili, yol, hata) = await _resimYukleyici.YukleAsync(resim, myCafeId);
                 if (basarili)
                 {
                     urun.ResimUrl = yol;
@@ -172,7 +172,7 @@ namespace SmartMenu.Controllers
             string? yeniResimYolu = null;
             if (ModelState.IsValid && resim != null)
             {
-                var (basarili, yol, hata) = await _resimYukleyici.YukleAsync(resim);
+                var (basarili, yol, hata) = await _resimYukleyici.YukleAsync(resim, myCafeId, mevcutUrun.ResimUrl);
                 if (basarili)
                 {
                     yeniResimYolu = yol;

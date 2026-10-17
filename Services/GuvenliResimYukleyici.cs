@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using SmartMenu.Data;
 using SmartMenu.Models;
 
@@ -26,6 +27,16 @@ namespace SmartMenu.Services
 
         private static readonly string[] IzinliUzantilar = { ".jpg", ".jpeg", ".png", ".webp" };
 
+        // Hesap başına kota. Ürün görselleri tarayıcıda 600x600'e küçültüldüğü için (yaklaşık 50-100 KB)
+        // normal bir kafe bu sınırlara yaklaşmaz; sınırlar sadece kötüye kullanımı durdurmak için var.
+        public const int KafeBasinaMaksimumGorsel = 100;
+        public const long KafeBasinaMaksimumBayt = 20L * 1024 * 1024;
+
+        // Tüm sistem için emniyet sınırı. Görseller veritabanında tutulduğu için, biri çok sayıda hesap
+        // açıp görsel yüklese bile veritabanı dolmasın: menü ve siparişler çalışmaya devam eder,
+        // sadece yeni görsel yüklemesi durur.
+        public const long ToplamMaksimumBayt = 300L * 1024 * 1024;
+
         public GuvenliResimYukleyici(ApplicationDbContext context, IWebHostEnvironment env)
         {
             _context = context;
@@ -35,7 +46,10 @@ namespace SmartMenu.Services
         /// <summary>
         /// Dosyayı doğrulayıp kaydeder. Başarılıysa görselin adresini (ör. "/gorsel/{id}") döndürür.
         /// </summary>
-        public async Task<(bool Basarili, string? Yol, string? Hata)> YukleAsync(IFormFile dosya)
+        /// <param name="cafeId">Görseli yükleyen kafe; kota bu kafeye göre hesaplanır.</param>
+        /// <param name="yerineGecenYol">Değiştirilecek mevcut görsel (ör. logoyu yenilerken). Kota hesabında sayılmaz,
+        /// çünkü yeni görsel kaydedildikten sonra silinecek.</param>
+        public async Task<(bool Basarili, string? Yol, string? Hata)> YukleAsync(IFormFile dosya, int cafeId, string? yerineGecenYol = null)
         {
             if (dosya == null || dosya.Length == 0)
             {
@@ -65,11 +79,19 @@ namespace SmartMenu.Services
                 return (false, null, "Dosya geçerli bir görsel değil.");
             }
 
+            var kotaHatasi = await KotaHatasiAsync(cafeId, veri.Length, GorselIdsiniCoz(yerineGecenYol));
+            if (kotaHatasi != null)
+            {
+                return (false, null, kotaHatasi);
+            }
+
             var gorsel = new Gorsel
             {
                 Id = Guid.NewGuid(),
                 IcerikTipi = icerikTipi,
                 Veri = veri,
+                Boyut = veri.Length,
+                CafeId = cafeId,
                 OlusturulmaTarihi = DateTime.UtcNow
             };
 
@@ -91,7 +113,7 @@ namespace SmartMenu.Services
 
             if (yol.StartsWith(GorselYolOneki, StringComparison.OrdinalIgnoreCase))
             {
-                if (Guid.TryParse(yol.Substring(GorselYolOneki.Length), out var id))
+                if (GorselIdsiniCoz(yol) is Guid id)
                 {
                     var gorsel = await _context.Gorseller.FindAsync(id);
                     if (gorsel != null)
@@ -111,6 +133,38 @@ namespace SmartMenu.Services
             {
                 File.Delete(tamYol);
             }
+        }
+
+        private async Task<string?> KotaHatasiAsync(int cafeId, int yeniBoyut, Guid? haricId)
+        {
+            var kafeninGorselleri = _context.Gorseller.Where(g => g.CafeId == cafeId && g.Id != haricId);
+
+            if (await kafeninGorselleri.CountAsync() >= KafeBasinaMaksimumGorsel)
+            {
+                return $"En fazla {KafeBasinaMaksimumGorsel} görsel yükleyebilirsiniz. Kullanmadığınız ürün görsellerini silerek yer açabilirsiniz.";
+            }
+
+            if (await kafeninGorselleri.SumAsync(g => (long)g.Boyut) + yeniBoyut > KafeBasinaMaksimumBayt)
+            {
+                return $"Görseller için ayrılan {KafeBasinaMaksimumBayt / (1024 * 1024)} MB alan doldu. Kullanmadığınız ürün görsellerini silerek yer açabilirsiniz.";
+            }
+
+            if (await _context.Gorseller.SumAsync(g => (long)g.Boyut) + yeniBoyut > ToplamMaksimumBayt)
+            {
+                return "Görsel yükleme şu anda geçici olarak kapalı. Lütfen daha sonra tekrar deneyin.";
+            }
+
+            return null;
+        }
+
+        private static Guid? GorselIdsiniCoz(string? yol)
+        {
+            if (string.IsNullOrWhiteSpace(yol) || !yol.StartsWith(GorselYolOneki, StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return Guid.TryParse(yol.Substring(GorselYolOneki.Length), out var id) ? id : null;
         }
 
         private static string? IcerikTipiniBul(byte[] veri)

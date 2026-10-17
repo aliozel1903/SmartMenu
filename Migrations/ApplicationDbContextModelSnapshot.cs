@@ -17,7 +17,7 @@ namespace SmartMenu.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "8.0.32")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -86,6 +86,12 @@ namespace SmartMenu.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Boyut")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CafeId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("IcerikTipi")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -99,6 +105,8 @@ namespace SmartMenu.Migrations
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CafeId");
 
                     b.ToTable("Gorseller");
                 });
@@ -353,6 +361,16 @@ namespace SmartMenu.Migrations
                     b.HasIndex("KategoriId");
 
                     b.ToTable("Urunler");
+                });
+
+            modelBuilder.Entity("SmartMenu.Models.Gorsel", b =>
+                {
+                    b.HasOne("SmartMenu.Models.Cafe", "Cafe")
+                        .WithMany()
+                        .HasForeignKey("CafeId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Cafe");
                 });
 
             modelBuilder.Entity("SmartMenu.Models.Kategori", b =>

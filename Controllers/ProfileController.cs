@@ -85,7 +85,7 @@ namespace SmartMenu.Controllers
             }
 
             // Dosya doğrulaması (boyut, uzantı, içerik tipi ve gerçek format imzası) servis içinde yapılır.
-            var (basarili, yol, hata) = await _resimYukleyici.YukleAsync(logo);
+            var (basarili, yol, hata) = await _resimYukleyici.YukleAsync(logo, cafe.Id, cafe.LogoUrl);
 
             if (!basarili)
             {
