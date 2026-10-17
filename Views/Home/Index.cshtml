@@ -1,13 +1,16 @@
 ﻿@{
-    Layout = null; 
-    var searchItemsJson = Json.Serialize(ViewBag.SearchItems ?? new List<object>());
+    Layout = null;
+    // Demo şube tanımlıysa "Canlı Demoyu Gör" butonu gösterilir (bkz. HomeController).
+    var demoMenuUrl = ViewBag.DemoMenuUrl as string;
+    var girisYapti = User.Identity?.IsAuthenticated == true;
 }
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SmartMenu - Dijital Menü Platformu</title>
+    <title>SmartMenu - QR Menü ve Masadan Sipariş</title>
+    <meta name="description" content="QR menü, masadan sipariş, garson çağırma ve mutfak ekranı tek panelde. Kafe ve restoranlar için dijital menü platformu." />
     <link rel="icon" type="image/png" href="~/img/smartmenu-logo.png" />
     <link rel="apple-touch-icon" href="~/img/smartmenu-logo.png" />
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
@@ -15,151 +18,338 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700" rel="stylesheet" />
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
-
-        /* Ana sayfanın beyaz/boş görünmemesi için çok hafif bir QR-grid arka plan dokusu ekliyoruz. */
+        html { scroll-behavior: smooth; }
+        /* Üst bölümde hafif bir QR-grid dokusu; aşağı doğru kaybolur. */
         .qr-pattern {
             background-image:
                 linear-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(37, 99, 235, 0.08) 1px, transparent 1px);
             background-size: 34px 34px;
-            /* Desen aşağı doğru kaybolsun; içerik alanında göz yormasın. */
-            mask-image: linear-gradient(to bottom, black, transparent 72%);
+            mask-image: linear-gradient(to bottom, black, transparent 80%);
         }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 500; }
     </style>
 </head>
 <body class="relative bg-[#FDFCF8] text-[#181512]">
+    <div class="qr-pattern pointer-events-none absolute inset-x-0 top-0 h-[720px]" aria-hidden="true"></div>
 
-    <!-- Arka plan katmanı: sayfanın üstünde hafif QR-grid hissi verir, tıklamaları engellemez. -->
-    <div class="qr-pattern pointer-events-none absolute inset-x-0 top-0 h-[520px]"></div>
-
-    <!-- Büyük ve silik logo watermark: marka hissi verir ama ana metnin önüne geçmez. -->
-    <div class="pointer-events-none absolute right-[-120px] top-24 hidden md:block opacity-[0.08]">
-        <img src="~/img/smartmenu-logo.png" alt="" class="w-[420px] h-[420px] object-contain" />
-    </div>
-
-    <nav class="relative z-10 flex flex-col md:flex-row justify-between items-center px-4 py-6 md:px-6 max-w-7xl mx-auto w-full gap-4 md:gap-0">
-        <div class="flex items-center gap-3">
-            <img src="~/img/smartmenu-logo.png" alt="SmartMenu" class="w-11 h-11 rounded-2xl object-cover shadow-sm" />
-            <div class="text-2xl font-extrabold tracking-tighter text-blue-600">Smart<span class="text-stone-800">Menu</span></div>
+    <!-- Üst menü -->
+    <nav class="relative z-20 max-w-7xl mx-auto w-full px-4 md:px-6 py-5 flex items-center justify-between gap-4">
+        <a href="/" class="flex items-center gap-3">
+            <img src="~/img/smartmenu-logo.png" alt="SmartMenu" class="w-10 h-10 rounded-2xl object-cover shadow-sm" />
+            <span class="text-xl md:text-2xl font-extrabold tracking-tighter text-blue-600">Smart<span class="text-stone-800">Menu</span></span>
+        </a>
+        <div class="hidden md:flex items-center gap-8 text-sm font-bold text-stone-500">
+            <a href="#nasil-calisir" class="hover:text-blue-600 transition-colors">Nasıl Çalışır</a>
+            <a href="#ozellikler" class="hover:text-blue-600 transition-colors">Özellikler</a>
+            <a href="#guvenlik" class="hover:text-blue-600 transition-colors">Güvenlik</a>
         </div>
-        <div class="flex items-center gap-3">
-            <a asp-controller="Account" asp-action="Login" class="px-4 py-2 text-sm font-bold text-stone-600 hover:text-blue-600 transition-colors">Giriş Yap</a>
-            <a asp-controller="Account" asp-action="Register" class="px-5 py-2.5 text-sm font-bold bg-blue-600 text-white rounded-full shadow-md hover:bg-blue-700 transition-all active:scale-95">Ücretsiz Başla</a>
+        <div class="flex items-center gap-2 md:gap-3">
+            @if (girisYapti)
+            {
+                <a asp-controller="Dashboard" asp-action="Index" class="whitespace-nowrap px-5 py-2.5 text-sm font-bold bg-blue-600 text-white rounded-full shadow-md hover:bg-blue-700 transition-colors">Panele Git</a>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" class="whitespace-nowrap rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-stone-600 hover:text-blue-600 transition-colors sm:border-0 sm:bg-transparent">Giriş Yap</a>
+                <!-- Telefonda gizli: aynı buton giriş bölümünde büyük olarak zaten var -->
+                <a asp-controller="Account" asp-action="Register" class="hidden sm:inline-flex whitespace-nowrap px-5 py-2.5 text-sm font-bold bg-blue-600 text-white rounded-full shadow-md hover:bg-blue-700 transition-colors">Ücretsiz Başla</a>
+            }
         </div>
     </nav>
 
-    <main class="relative z-10 max-w-4xl mx-auto px-4 pt-8 md:pt-12 pb-16 md:pb-24 text-center">
-        <h1 class="text-4xl md:text-7xl font-extrabold tracking-tight mb-6 md:mb-8">
-            Lezzeti <span class="text-blue-600 italic">Dijitalle</span> Buluşturun.
-        </h1>
-        <p class="text-base md:text-lg text-stone-500 mb-10 max-w-2xl mx-auto leading-relaxed font-medium px-2">
-            Müşterileriniz QR kodunuzu okutsun, menünüze anında ulaşsın. Saniyeler içinde kendi dijital menünüzü oluşturun.
-        </p>
+    <main class="relative z-10">
+        <!-- Giriş bölümü -->
+        <section class="max-w-7xl mx-auto px-4 md:px-6 pt-8 md:pt-16 pb-20 md:pb-28 grid lg:grid-cols-[1.1fr_0.9fr] gap-14 lg:gap-8 items-center">
+            <div class="text-center lg:text-left">
+                <span class="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-1.5 text-xs font-bold text-blue-700">
+                    <span class="material-symbols-outlined text-[16px]">qr_code_2</span>
+                    QR menü · Masadan sipariş · Garson çağırma
+                </span>
+                <h1 class="mt-6 text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05]">
+                    Lezzeti <span class="text-blue-600 italic">Dijitalle</span> Buluşturun.
+                </h1>
+                <p class="mt-6 text-base md:text-lg text-stone-500 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
+                    Müşterileriniz masadaki QR kodu okutsun, menünüze ulaşsın ve siparişini doğrudan telefondan versin.
+                    Siparişler mutfak ekranına, garson çağrıları panelinize anında düşsün.
+                </p>
+                <div class="mt-9 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                    @if (girisYapti)
+                    {
+                        <a asp-controller="Dashboard" asp-action="Index" class="inline-flex items-center justify-center gap-2 rounded-full bg-[#181512] px-7 py-4 font-bold text-white hover:bg-stone-800 transition-colors">
+                            Panele Git <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Register" class="inline-flex items-center justify-center gap-2 rounded-full bg-[#181512] px-7 py-4 font-bold text-white hover:bg-stone-800 transition-colors">
+                            Ücretsiz Başla <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+                        </a>
+                    }
+                    @if (!string.IsNullOrEmpty(demoMenuUrl))
+                    {
+                        <a href="@demoMenuUrl" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-full border border-stone-200 bg-white px-7 py-4 font-bold text-stone-700 hover:border-blue-300 hover:text-blue-600 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">smartphone</span> Canlı Demoyu Gör
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="#nasil-calisir" class="inline-flex items-center justify-center gap-2 rounded-full border border-stone-200 bg-white px-7 py-4 font-bold text-stone-700 hover:border-blue-300 hover:text-blue-600 transition-colors">
+                            Nasıl Çalışır?
+                        </a>
+                    }
+                </div>
+                <p class="mt-5 text-xs font-semibold text-stone-400">Kurulum dakikalar sürer. Kredi kartı gerekmez.</p>
+            </div>
 
-        <div class="relative bg-white/95 backdrop-blur p-2 rounded-[24px] md:rounded-[32px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-stone-100 flex flex-col md:flex-row gap-2 max-w-2xl mx-auto mb-12">
-            <div class="relative flex-grow w-full">
-                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 leading-none pointer-events-none">search</span>
-                <input id="cafeSearchInput" type="text" placeholder="Kafe veya Restoran Ara..." class="w-full bg-stone-50 py-4 pl-12 pr-4 rounded-[18px] md:rounded-[24px] outline-none border-none text-[15px] font-semibold focus:ring-2 focus:ring-blue-600/20 transition-all" />
-            </div>
-            <button onclick="goToCafe()" class="w-full md:w-auto bg-[#181512] text-white px-8 py-4 rounded-[18px] md:rounded-[24px] font-bold hover:bg-stone-800 transition-all flex items-center justify-center gap-2">
-                Menüyü Gör <span class="material-symbols-outlined">arrow_forward</span>
-            </button>
+            <!-- Telefon maketi: müşterinin gördüğü menü (resim değil, HTML ile çizildi) -->
+            <div class="relative mx-auto w-full max-w-[340px]" aria-hidden="true">
+                <div class="absolute -inset-10 rounded-full bg-blue-200/40 blur-3xl"></div>
 
-            <!-- Arama önerileri buraya JS ile basılır. -->
-            <div id="searchSuggestions" class="hidden absolute left-2 right-2 top-[76px] md:top-[72px] z-30 overflow-hidden rounded-2xl border border-stone-100 bg-white text-left shadow-[0_18px_50px_rgba(0,0,0,0.10)]"></div>
-        </div>
+                <div class="relative rounded-[2.75rem] border-[10px] border-[#181512] bg-[#181512] shadow-2xl">
+                    <div class="absolute left-1/2 top-0 z-10 h-6 w-28 -translate-x-1/2 rounded-b-2xl bg-[#181512]"></div>
+                    <div class="overflow-hidden rounded-[2.1rem] bg-[#FDFCF8]">
+                        <div class="bg-blue-600 px-5 pt-9 pb-5 text-white">
+                            <p class="text-[11px] font-semibold opacity-80">Masa 4 · Kadıköy</p>
+                            <p class="mt-1 text-xl font-extrabold">Kahve Durağı</p>
+                        </div>
+                        <div class="flex gap-2 overflow-hidden px-4 py-3">
+                            <span class="rounded-full bg-[#181512] px-3 py-1.5 text-[11px] font-bold text-white">Kahveler</span>
+                            <span class="rounded-full bg-stone-100 px-3 py-1.5 text-[11px] font-bold text-stone-500">Tatlılar</span>
+                            <span class="rounded-full bg-stone-100 px-3 py-1.5 text-[11px] font-bold text-stone-500">Atıştırmalık</span>
+                        </div>
+                        <div class="space-y-2.5 px-4 pb-4">
+                            <div class="flex items-center gap-3 rounded-2xl bg-white p-2.5 shadow-sm border border-stone-100">
+                                <div class="h-14 w-14 shrink-0 rounded-xl bg-gradient-to-br from-amber-200 to-amber-600"></div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[13px] font-bold">Latte</p>
+                                    <p class="text-[11px] text-stone-400">Espresso, sıcak süt</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[13px] font-extrabold">₺95</p>
+                                    <span class="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white"><span class="material-symbols-outlined text-[16px]">add</span></span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 rounded-2xl bg-white p-2.5 shadow-sm border border-stone-100">
+                                <div class="h-14 w-14 shrink-0 rounded-xl bg-gradient-to-br from-stone-300 to-stone-700"></div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[13px] font-bold">Türk Kahvesi</p>
+                                    <p class="text-[11px] text-stone-400">Lokum ile</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[13px] font-extrabold">₺80</p>
+                                    <span class="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white"><span class="material-symbols-outlined text-[16px]">add</span></span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 rounded-2xl bg-white p-2.5 shadow-sm border border-stone-100">
+                                <div class="h-14 w-14 shrink-0 rounded-xl bg-gradient-to-br from-rose-100 to-rose-400"></div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[13px] font-bold">San Sebastian</p>
+                                    <p class="text-[11px] text-stone-400">Günlük taze</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[13px] font-extrabold">₺160</p>
+                                    <span class="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white"><span class="material-symbols-outlined text-[16px]">add</span></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between gap-2 border-t border-stone-100 bg-white px-4 py-3">
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-2 text-[11px] font-bold text-stone-600"><span class="material-symbols-outlined text-[16px]">room_service</span>Garson</span>
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-4 py-2 text-[11px] font-bold text-white"><span class="material-symbols-outlined text-[16px]">shopping_bag</span>Sepet · 2</span>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            <div class="p-6 md:p-8 bg-blue-50 rounded-[24px] md:rounded-[32px] text-left border border-blue-100 group hover:bg-blue-600 transition-all duration-300 cursor-pointer">
-                <span class="material-symbols-outlined text-4xl text-blue-600 group-hover:text-white mb-3 md:mb-4">qr_code_scanner</span>
-                <h3 class="text-lg md:text-xl font-bold mb-2 group-hover:text-white">QR Okut</h3>
-                <p class="text-xs md:text-sm text-blue-800 group-hover:text-blue-100">Kameranı aç ve masadaki kodu tara.</p>
+                <!-- Panelde beliren bildirimler -->
+                <div class="absolute left-0 sm:-left-20 top-24 w-48 sm:w-52 rounded-2xl border border-stone-100 bg-white p-3 shadow-xl">
+                    <div class="flex items-center gap-2.5">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700"><span class="material-symbols-outlined text-[20px]">notifications_active</span></span>
+                        <div>
+                            <p class="text-[12px] font-bold">Masa 4 garson çağırıyor</p>
+                            <p class="text-[11px] text-stone-400">şimdi</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute right-0 sm:-right-16 bottom-20 sm:bottom-24 w-48 sm:w-52 rounded-2xl border border-stone-100 bg-white p-3 shadow-xl">
+                    <div class="flex items-center gap-2.5">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700"><span class="material-symbols-outlined text-[20px]">receipt_long</span></span>
+                        <div>
+                            <p class="text-[12px] font-bold">Yeni sipariş · Masa 7</p>
+                            <p class="text-[11px] text-stone-400">2 ürün · ₺255</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="p-6 md:p-8 bg-stone-50 rounded-[24px] md:rounded-[32px] text-left border border-stone-100">
-                <span class="material-symbols-outlined text-4xl text-stone-500 mb-3 md:mb-4">restaurant</span>
-                <h3 class="text-lg md:text-xl font-bold mb-2">Popüler Mekanlar</h3>
-                <p class="text-xs md:text-sm text-stone-500">Şehrindeki en iyi dijital menüleri keşfet.</p>
+        </section>
+
+        <!-- Nasıl çalışır -->
+        <section id="nasil-calisir" class="scroll-mt-8 bg-white border-y border-stone-100">
+            <div class="max-w-7xl mx-auto px-4 md:px-6 py-20 md:py-24">
+                <div class="max-w-2xl">
+                    <p class="text-sm font-bold text-blue-600">Nasıl çalışır?</p>
+                    <h2 class="mt-2 text-3xl md:text-5xl font-extrabold tracking-tight">Üç adımda dijital menü.</h2>
+                </div>
+                <div class="mt-12 grid md:grid-cols-3 gap-5">
+                    <div class="rounded-[28px] border border-stone-100 bg-[#FDFCF8] p-7">
+                        <span class="text-5xl font-extrabold text-blue-100">01</span>
+                        <h3 class="mt-4 text-xl font-bold">Menünü oluştur</h3>
+                        <p class="mt-2 text-sm leading-relaxed text-stone-500">Kategorilerini, ürünlerini, fiyatlarını ve fotoğraflarını panelden ekle. Fotoğraflar otomatik olarak kırpılıp küçültülür.</p>
+                    </div>
+                    <div class="rounded-[28px] border border-stone-100 bg-[#FDFCF8] p-7">
+                        <span class="text-5xl font-extrabold text-blue-100">02</span>
+                        <h3 class="mt-4 text-xl font-bold">QR'ını masaya koy</h3>
+                        <p class="mt-2 text-sm leading-relaxed text-stone-500">Ortasında logonun olduğu QR kodu, yazdırmaya hazır bir masa kartı olarak indir. Her şubenin kendi kodu olur.</p>
+                    </div>
+                    <div class="rounded-[28px] border border-stone-100 bg-[#FDFCF8] p-7">
+                        <span class="text-5xl font-extrabold text-blue-100">03</span>
+                        <h3 class="mt-4 text-xl font-bold">Siparişleri karşıla</h3>
+                        <p class="mt-2 text-sm leading-relaxed text-stone-500">Müşterinin siparişi mutfak ekranına, garson ve hesap çağrıları panele anında düşer. Ödemeyi kasadan kapatırsın.</p>
+                    </div>
+                </div>
             </div>
-            <div class="p-6 md:p-8 bg-stone-50 rounded-[24px] md:rounded-[32px] text-left border border-stone-100">
-                <span class="material-symbols-outlined text-4xl text-stone-500 mb-3 md:mb-4">bolt</span>
-                <h3 class="text-lg md:text-xl font-bold mb-2">Hızlı Sipariş</h3>
-                <p class="text-xs md:text-sm text-stone-500">Bekleme yapmadan, doğrudan telefondan seç.</p>
+        </section>
+
+        <!-- Özellikler -->
+        <section id="ozellikler" class="scroll-mt-8 max-w-7xl mx-auto px-4 md:px-6 py-20 md:py-24">
+            <div class="max-w-2xl">
+                <p class="text-sm font-bold text-blue-600">Özellikler</p>
+                <h2 class="mt-2 text-3xl md:text-5xl font-extrabold tracking-tight">Masadan mutfağa, tek panel.</h2>
+                <p class="mt-4 text-stone-500 leading-relaxed">Sadece bir menü linki değil; siparişi alan, mutfağa ileten ve kasada kapatan bir sistem.</p>
             </div>
-        </div>
+
+            @{
+                var ozellikler = new[]
+                {
+                    ("shopping_cart", "Masadan sipariş", "Müşteri sepetini telefondan oluşturur, sipariş anında mutfağa düşer. Fiyatlar her zaman sunucuda doğrulanır."),
+                    ("room_service", "Garson çağır, hesap iste", "Tek dokunuşla çağrı. Aynı masadan art arda gelen çağrılar engellenir, personel boşuna koşmaz."),
+                    ("soup_kitchen", "Mutfak ekranı", "Siparişler kendiliğinden yenilenen ekranda: bekliyor, hazırlanıyor, tamamlandı."),
+                    ("point_of_sale", "Kasa", "Masanın siparişlerini görür, ödenenleri tek tıkla kapatırsın."),
+                    ("storefront", "Çoklu şube", "Tek hesaptan tüm şubelerini yönet. Her şubede sipariş, garson ve hesap butonlarını ayrı ayrı aç-kapa."),
+                    ("monitoring", "İstatistikler", "Menünün kaç kez açıldığını günlük ve haftalık olarak takip et."),
+                    ("qr_code_2", "Logolu QR ve masa kartı", "Logonu yükle; QR'ın ortasında görünsün, masa kartı yazdırmaya hazır gelsin."),
+                    ("photo_camera", "Ürün fotoğrafları", "Fotoğrafı kırp, gerisini sistem halletsin: otomatik küçültme, hızlı açılan menü.")
+                };
+            }
+            <div class="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                @foreach (var (ikon, baslik, aciklama) in ozellikler)
+                {
+                    <div class="group rounded-[24px] border border-stone-100 bg-white p-6 transition-all hover:-translate-y-1 hover:border-blue-200 hover:shadow-[0_12px_30px_rgba(37,99,235,0.08)]">
+                        <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+                            <span class="material-symbols-outlined">@ikon</span>
+                        </span>
+                        <h3 class="mt-5 font-bold">@baslik</h3>
+                        <p class="mt-2 text-sm leading-relaxed text-stone-500">@aciklama</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Panel maketi: mutfak ekranı -->
+            <div class="mt-16 rounded-[32px] border border-stone-100 bg-white p-3 md:p-4 shadow-[0_20px_60px_rgba(0,0,0,0.06)]" aria-hidden="true">
+                <div class="flex items-center gap-2 px-3 pb-3">
+                    <span class="h-3 w-3 rounded-full bg-rose-300"></span>
+                    <span class="h-3 w-3 rounded-full bg-amber-300"></span>
+                    <span class="h-3 w-3 rounded-full bg-emerald-300"></span>
+                    <span class="ml-3 text-xs font-bold text-stone-400">Mutfak · Siparişler</span>
+                </div>
+                <div class="grid md:grid-cols-3 gap-3 rounded-[24px] bg-[#FDFCF8] p-3 md:p-4">
+                    <div class="rounded-2xl border border-amber-200 bg-white p-4">
+                        <div class="flex items-center justify-between">
+                            <p class="font-extrabold">Masa 7</p>
+                            <span class="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-700">Bekliyor</span>
+                        </div>
+                        <ul class="mt-3 space-y-1 text-sm text-stone-600"><li>2× Latte</li><li>1× San Sebastian</li></ul>
+                        <div class="mt-4 rounded-xl bg-[#181512] py-2 text-center text-xs font-bold text-white">Hazırlamaya başla</div>
+                    </div>
+                    <div class="rounded-2xl border border-blue-200 bg-white p-4">
+                        <div class="flex items-center justify-between">
+                            <p class="font-extrabold">Masa 2</p>
+                            <span class="rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-bold text-blue-700">Hazırlanıyor</span>
+                        </div>
+                        <ul class="mt-3 space-y-1 text-sm text-stone-600"><li>1× Türk Kahvesi</li><li>1× Tost</li></ul>
+                        <div class="mt-4 rounded-xl bg-blue-600 py-2 text-center text-xs font-bold text-white">Hazır</div>
+                    </div>
+                    <div class="rounded-2xl border border-stone-100 bg-white p-4 opacity-70">
+                        <div class="flex items-center justify-between">
+                            <p class="font-extrabold">Masa 4</p>
+                            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700">Tamamlandı</span>
+                        </div>
+                        <ul class="mt-3 space-y-1 text-sm text-stone-600"><li>3× Çay</li></ul>
+                        <div class="mt-4 rounded-xl bg-stone-100 py-2 text-center text-xs font-bold text-stone-500">Kasada</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Güvenlik -->
+        <section id="guvenlik" class="scroll-mt-8 bg-[#181512] text-white">
+            <div class="max-w-7xl mx-auto px-4 md:px-6 py-20 md:py-24 grid lg:grid-cols-[0.9fr_1.1fr] gap-12 items-start">
+                <div>
+                    <p class="text-sm font-bold text-blue-400">Güvenlik</p>
+                    <h2 class="mt-2 text-3xl md:text-5xl font-extrabold tracking-tight">QR kodunuz kimsenin elinde oyuncak olmasın.</h2>
+                    <p class="mt-5 text-stone-400 leading-relaxed">QR menülerin en zayıf noktası kodun kendisidir: tahmin edilen linkler, masaya yapıştırılan sahte etiketler. SmartMenu bunlara karşı tasarlandı.</p>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div class="rounded-[24px] border border-white/10 bg-white/5 p-6">
+                        <span class="material-symbols-outlined text-blue-400">key</span>
+                        <h3 class="mt-4 font-bold">Tahmin edilemez kodlar</h3>
+                        <p class="mt-2 text-sm leading-relaxed text-stone-400">QR linkleri sıralı numara değil, rastgele üretilmiş uzun anahtarlar taşır. Başka bir işletmenin menüsüne tahminle ulaşılamaz.</p>
+                    </div>
+                    <div class="rounded-[24px] border border-white/10 bg-white/5 p-6">
+                        <span class="material-symbols-outlined text-blue-400">autorenew</span>
+                        <h3 class="mt-4 font-bold">Tek tıkla yenile</h3>
+                        <p class="mt-2 text-sm leading-relaxed text-stone-400">Kodunuz kötüye kullanılırsa yenisini üretin; eski kod anında geçersiz olur.</p>
+                    </div>
+                    <div class="rounded-[24px] border border-white/10 bg-white/5 p-6">
+                        <span class="material-symbols-outlined text-blue-400">crisis_alert</span>
+                        <h3 class="mt-4 font-bold">Sahte etiket uyarısı</h3>
+                        <p class="mt-2 text-sm leading-relaxed text-stone-400">Bir şubenin taramaları aniden düşerse panel uyarır: masadaki kodun üzerine sahte bir etiket yapıştırılmış olabilir.</p>
+                    </div>
+                    <div class="rounded-[24px] border border-white/10 bg-white/5 p-6">
+                        <span class="material-symbols-outlined text-blue-400">verified_user</span>
+                        <h3 class="mt-4 font-bold">Doğrulanabilir masa kartı</h3>
+                        <p class="mt-2 text-sm leading-relaxed text-stone-400">Masa kartında sitenin adresi yazar; müşteri doğru yerde olduğunu tarayıcıdan kontrol edebilir.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Son çağrı -->
+        <section class="max-w-7xl mx-auto px-4 md:px-6 py-20 md:py-24">
+            <div class="relative overflow-hidden rounded-[36px] bg-blue-600 px-6 py-14 md:px-16 md:py-20 text-center text-white">
+                <div class="qr-pattern pointer-events-none absolute inset-0 opacity-40" aria-hidden="true"></div>
+                <h2 class="relative text-3xl md:text-5xl font-extrabold tracking-tight">Kağıt menüye veda edin.</h2>
+                <p class="relative mx-auto mt-4 max-w-xl text-blue-100 leading-relaxed">Hesabını aç, menünü ekle, QR'ını masaya koy. Gerisi SmartMenu'de.</p>
+                <div class="relative mt-8 flex flex-col sm:flex-row justify-center gap-3">
+                    @if (girisYapti)
+                    {
+                        <a asp-controller="Dashboard" asp-action="Index" class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-4 font-bold text-blue-700 hover:bg-blue-50 transition-colors">Panele Git</a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Register" class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-4 font-bold text-blue-700 hover:bg-blue-50 transition-colors">Ücretsiz Başla</a>
+                    }
+                    @if (!string.IsNullOrEmpty(demoMenuUrl))
+                    {
+                        <a href="@demoMenuUrl" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-full border border-white/40 px-7 py-4 font-bold text-white hover:bg-white/10 transition-colors">Canlı Demoyu Gör</a>
+                    }
+                </div>
+            </div>
+        </section>
     </main>
 
-    <script>
-        // Controller'dan gelen şube listesiyle ana sayfa aramasını gerçek önerilere bağlıyoruz.
-        const searchItems = @Html.Raw(searchItemsJson);
-        const searchInput = document.getElementById('cafeSearchInput');
-        const suggestionsBox = document.getElementById('searchSuggestions');
-        let selectedToken = null;
-
-        function normalizeSearchText(value) {
-            return (value || '').toLocaleLowerCase('tr-TR');
-        }
-
-        function renderSuggestions(query) {
-            const normalizedQuery = normalizeSearchText(query);
-            suggestionsBox.innerHTML = '';
-
-            if (!normalizedQuery) {
-                suggestionsBox.classList.add('hidden');
-                selectedToken = null;
-                return;
-            }
-
-            const matches = searchItems
-                .filter(item => normalizeSearchText(`${item.markaAdi} ${item.subeAdi} ${item.adres}`).includes(normalizedQuery))
-                .slice(0, 6);
-
-            if (matches.length === 0) {
-                suggestionsBox.classList.add('hidden');
-                selectedToken = null;
-                return;
-            }
-
-            matches.forEach(item => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'w-full px-4 py-3 hover:bg-blue-50 transition-colors flex items-center gap-3 text-left';
-                button.innerHTML = `
-                    <span class="material-symbols-outlined text-blue-600">storefront</span>
-                    <span class="min-w-0">
-                        <span class="block text-sm font-bold text-stone-900 truncate">${item.subeAdi || item.markaAdi}</span>
-                        <span class="block text-xs text-stone-500 truncate">${item.markaAdi || 'SmartMenu'}${item.adres ? ' · ' + item.adres : ''}</span>
-                    </span>
-                `;
-                button.addEventListener('click', function () {
-                    selectedToken = item.token;
-                    searchInput.value = item.subeAdi || item.markaAdi;
-                    suggestionsBox.classList.add('hidden');
-                });
-                suggestionsBox.appendChild(button);
-            });
-
-            suggestionsBox.classList.remove('hidden');
-        }
-
-        searchInput.addEventListener('input', function () {
-            renderSuggestions(this.value);
-        });
-
-        function goToCafe() {
-            const val = searchInput.value;
-            if (!selectedToken && val) {
-                const normalizedValue = normalizeSearchText(val);
-                const firstMatch = searchItems.find(item => normalizeSearchText(`${item.markaAdi} ${item.subeAdi}`).includes(normalizedValue));
-                selectedToken = firstMatch?.token || null;
-            }
-
-            if (selectedToken) {
-                window.location.href = "/Menu?token=" + encodeURIComponent(selectedToken);
-                return;
-            }
-
-            alert("Lütfen listeden bir kafe veya şube seçin.");
-        }
-    </script>
+    <footer class="border-t border-stone-100">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-stone-400">
+            <div class="flex items-center gap-2">
+                <img src="~/img/smartmenu-logo.png" alt="" class="w-6 h-6 rounded-lg object-cover" />
+                <span class="font-bold text-stone-500">SmartMenu</span>
+                <span>· © @DateTime.UtcNow.Year</span>
+            </div>
+            <div class="flex items-center gap-5 font-semibold">
+                <a href="#ozellikler" class="hover:text-blue-600 transition-colors">Özellikler</a>
+                <a href="#guvenlik" class="hover:text-blue-600 transition-colors">Güvenlik</a>
+                <a asp-controller="Account" asp-action="Login" class="hover:text-blue-600 transition-colors">Giriş Yap</a>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
