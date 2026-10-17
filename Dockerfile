@@ -15,8 +15,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=derleme /app ./
 
-# .NET 8 imajları varsayılan olarak 8080 portunu dinler.
 ENV ASPNETCORE_ENVIRONMENT=Production
 EXPOSE 8080
 
-ENTRYPOINT ["dotnet", "SmartMenu.dll"]
+# Render gibi platformlar dinlenecek portu PORT ortam değişkeniyle bildirir.
+# PORT tanımlı değilse (ör. yerelde docker run) .NET'in varsayılanı olan 8080 kullanılır.
+CMD ["sh", "-c", "ASPNETCORE_HTTP_PORTS=${PORT:-8080} exec dotnet SmartMenu.dll"]
