@@ -50,7 +50,10 @@ namespace SmartMenu.Controllers
         {
             var cafe = await KafeyiBulAsync(email);
 
-            if (cafe != null && BCrypt.Net.BCrypt.Verify(password, cafe.SifreHash))
+            // Şifre alanı boş gönderilirse BCrypt hata fırlatıyordu (boş metin null olarak gelir); bu durum
+            // da diğer hatalı girişler gibi "geçersiz e-posta veya şifre" cevabını alır.
+            if (cafe != null && !string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(cafe.SifreHash)
+                && BCrypt.Net.BCrypt.Verify(password, cafe.SifreHash))
             {
                 // Bu uyarı sadece şifre doğruysa gösterilir; böylece başkası bir adresin kayıtlı olup
                 // olmadığını bu mesaj üzerinden öğrenemez.
