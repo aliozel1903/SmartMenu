@@ -125,14 +125,16 @@ namespace SmartMenu.Controllers
                 EmailDogrulandi = false
             };
 
-            _context.Kafeler.Add(newCafe);
-            await _context.SaveChangesAsync();
-
             // Franchise yapısında her yeni marka için başlangıçta bir merkez şube oluşturuyoruz.
+            // Kafe ve şube tek SaveChanges ile (tek işlemde) kaydedilir: biri başarısız olursa
+            // yarım kalmış, şubesiz bir hesap oluşmaz.
+            _context.Kafeler.Add(newCafe);
             _context.Subeler.Add(new Sube
             {
-                CafeId = newCafe.Id,
+                Cafe = newCafe,
                 SubeAdi = newCafe.Ad,
+                QrToken = QrTokenUretici.Uret(),
+                QrTokenTarihi = DateTime.UtcNow,
                 OlusturulmaTarihi = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
