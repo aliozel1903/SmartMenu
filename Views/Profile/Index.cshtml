@@ -83,14 +83,21 @@
                 </div>
 
                 <div>
-                    <label asp-for="Email" class="block text-[13px] font-semibold text-on-surface-variant mb-2">E-posta</label>
-                    <input asp-for="Email" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all" />
-                    <span asp-validation-for="Email" class="text-error text-[12px] mt-1 block font-medium"></span>
+                    <label class="block text-[13px] font-semibold text-on-surface-variant mb-2">E-posta</label>
+                    <input value="@Model.Email" disabled class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent text-[15px] text-on-surface-variant cursor-not-allowed" />
+                    <p class="text-[12px] text-on-surface-variant mt-1">Giriş ve şifre sıfırlama için kullanılır, buradan değiştirilemez.</p>
                 </div>
 
                 <div>
                     <label asp-for="YeniSifre" class="block text-[13px] font-semibold text-on-surface-variant mb-2">Yeni Şifre</label>
-                    <input asp-for="YeniSifre" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all" placeholder="Boş bırakırsanız mevcut şifre korunur" />
+                    <input asp-for="YeniSifre" autocomplete="new-password" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all" placeholder="Boş bırakırsanız mevcut şifre korunur" />
+                    <span asp-validation-for="YeniSifre" class="text-error text-[12px] mt-1 block font-medium"></span>
+                </div>
+
+                <div>
+                    <label asp-for="MevcutSifre" class="block text-[13px] font-semibold text-on-surface-variant mb-2">Mevcut Şifre</label>
+                    <input asp-for="MevcutSifre" autocomplete="current-password" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all" placeholder="Sadece şifre değiştirirken gerekli" />
+                    <span asp-validation-for="MevcutSifre" class="text-error text-[12px] mt-1 block font-medium"></span>
                 </div>
             </div>
 

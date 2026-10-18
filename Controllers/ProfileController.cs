@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -46,24 +47,45 @@ namespace SmartMenu.Controllers
             var cafe = await _context.Kafeler.FindAsync(GetCurrentCafeId());
             if (cafe == null) return NotFound();
 
+            // Form hatalıysa sayfa yeniden çizilir; formdan gelmeyen alanları sunucudan geri yazıyoruz.
+            model.Email = cafe.Email;
+            model.LogoUrl = cafe.LogoUrl;
+
             if (!ModelState.IsValid)
             {
-                // Form hatalıysa sayfa yeniden çizilir; mevcut logo kaybolmasın diye geri yazıyoruz.
-                model.LogoUrl = cafe.LogoUrl;
+                return View(model);
+            }
+
+            var sifreDegisti = !string.IsNullOrWhiteSpace(model.YeniSifre);
+            if (sifreDegisti &&
+                (string.IsNullOrEmpty(model.MevcutSifre) || !BCrypt.Net.BCrypt.Verify(model.MevcutSifre, cafe.SifreHash)))
+            {
+                ModelState.AddModelError(nameof(model.MevcutSifre), "Şifreni değiştirmek için mevcut şifreni doğru girmelisin.");
                 return View(model);
             }
 
             cafe.Ad = model.Ad;
-            cafe.Email = model.Email;
 
             // Şifre alanı boş bırakılırsa mevcut hash korunur; doluysa BCrypt ile yeniden hashlenir.
-            if (!string.IsNullOrWhiteSpace(model.YeniSifre))
+            if (sifreDegisti)
             {
                 cafe.SifreHash = BCrypt.Net.BCrypt.HashPassword(model.YeniSifre);
+                // Diğer cihazlardaki oturumlar kapanır.
+                cafe.GuvenlikDamgasi = OturumYoneticisi.YeniDamga();
             }
 
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Profil bilgileriniz güncellendi.";
+
+            if (sifreDegisti)
+            {
+                // Bu cihazdaki oturum yeni damgayla yenilenir; kullanıcı şifresini değiştirdiği yerde çıkış yapmış olmaz.
+                var mevcutOturum = await HttpContext.AuthenticateAsync(OturumYoneticisi.Sema);
+                await OturumYoneticisi.AcAsync(HttpContext, cafe, mevcutOturum.Properties?.IsPersistent ?? false);
+            }
+
+            TempData["Success"] = sifreDegisti
+                ? "Profil bilgileriniz ve şifreniz güncellendi. Diğer cihazlardaki oturumlar kapatıldı."
+                : "Profil bilgileriniz güncellendi.";
 
             return RedirectToAction(nameof(Index));
         }

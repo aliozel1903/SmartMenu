@@ -61,23 +61,7 @@ namespace SmartMenu.Controllers
                     return View();
                 }
 
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, cafe.Ad ?? email),
-                    new Claim(ClaimTypes.Email, cafe.Email ?? email),
-                    new Claim("CafeId", cafe.Id.ToString())
-                };
-
-                var identity = new ClaimsIdentity(claims, "AdminCookies");
-                var principal = new ClaimsPrincipal(identity);
-
-                var authProperties = new AuthenticationProperties
-                {
-                    IsPersistent = rememberMe,
-                    ExpiresUtc = rememberMe ? DateTimeOffset.UtcNow.AddDays(30) : null
-                };
-
-                await HttpContext.SignInAsync("AdminCookies", principal, authProperties);
+                await OturumYoneticisi.AcAsync(HttpContext, cafe, rememberMe);
 
                 return RedirectToAction("Index", "Dashboard");
             }
@@ -137,6 +121,7 @@ namespace SmartMenu.Controllers
                 Ad = cafeName.Trim(),
                 Email = email,
                 SifreHash = BCrypt.Net.BCrypt.HashPassword(password),
+                GuvenlikDamgasi = OturumYoneticisi.YeniDamga(),
                 EmailDogrulandi = false
             };
 
@@ -261,6 +246,8 @@ namespace SmartMenu.Controllers
             }
 
             cafe.SifreHash = BCrypt.Net.BCrypt.HashPassword(sifre);
+            // Hesaba açık olan tüm oturumlar kapanır: şifreyi ele geçirip giriş yapmış biri varsa dışarıda kalır.
+            cafe.GuvenlikDamgasi = OturumYoneticisi.YeniDamga();
             // Bağlantıya tıklayabildiğine göre e-posta adresi gerçekten bu kişiye ait.
             cafe.EmailDogrulandi = true;
             await _context.SaveChangesAsync();
@@ -272,7 +259,7 @@ namespace SmartMenu.Controllers
         // 3. ÇIKIŞ YAP (GÜVENLİ ÇIKIŞ)
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync("AdminCookies");
+            await HttpContext.SignOutAsync(OturumYoneticisi.Sema);
             return RedirectToAction("Index", "Home"); 
         }
 

@@ -11,11 +11,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // GÜVENLİK GÖREVLİSİ (Authentication) AYARLARI
-builder.Services.AddAuthentication("AdminCookies")
-    .AddCookie("AdminCookies", options =>
+builder.Services.AddAuthentication(OturumYoneticisi.Sema)
+    .AddCookie(OturumYoneticisi.Sema, options =>
     {
         options.LoginPath = "/Account/Login"; // Biletsiz girmeye çalışanları bu sayfaya yolla
         options.ExpireTimeSpan = TimeSpan.FromDays(1); // 1 gün boyunca girişi hatırla
+        // Şifre değişince diğer cihazlardaki oturumlar kapanır (güvenlik damgası kontrolü).
+        options.Events.OnValidatePrincipal = OturumYoneticisi.DogrulaAsync;
     });
 
 // PostgreSQL bağlantısı. Bağlantı dizesi (şifre dahil) depoda hiçbir dosyada tutulmaz:

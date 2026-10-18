@@ -33,6 +33,10 @@ namespace SmartMenu.Models
         // tıklayarak kanıtlayana kadar giriş yapamaz. Böylece sahte adreslerle açılan hesaplar kullanılamaz.
         public bool EmailDogrulandi { get; set; }
 
+        // Şifre değişince yenilenir; eski damgayı taşıyan giriş çerezleri geçersiz olur (bkz. OturumYoneticisi).
+        [StringLength(64)]
+        public string GuvenlikDamgasi { get; set; } = string.Empty;
+
         public DateTime KayitTarihi { get; set; } = DateTime.UtcNow;
     }
 }

@@ -66,6 +66,11 @@ namespace SmartMenu.Migrations
                     b.Property<bool>("EmailDogrulandi")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("GuvenlikDamgasi")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<DateTime>("KayitTarihi")
                         .HasColumnType("timestamp with time zone");
 
