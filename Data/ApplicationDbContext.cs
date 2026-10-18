@@ -24,6 +24,7 @@ namespace SmartMenu.Data
         public DbSet<SiparisDetay> SiparisDetaylari { get; set; }
         public DbSet<MasaBildirim> MasaBildirimleri { get; set; }
         public DbSet<Gorsel> Gorseller { get; set; }
+        public DbSet<EpostaToken> EpostaTokenlari { get; set; }
         public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -80,6 +81,24 @@ namespace SmartMenu.Data
                 .WithMany()
                 .HasForeignKey(g => g.CafeId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // E-posta bağlantıları: kafe silinince token'ları da silinir. Bağlantı açıldığında
+            // token özetiyle arama yapılır; gönderim sınırları da kafe/amaç/tarih üzerinden sayılır.
+            modelBuilder.Entity<EpostaToken>()
+                .HasOne(t => t.Cafe)
+                .WithMany()
+                .HasForeignKey(t => t.CafeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<EpostaToken>()
+                .HasIndex(t => t.TokenHash)
+                .IsUnique();
+
+            modelBuilder.Entity<EpostaToken>()
+                .HasIndex(t => new { t.CafeId, t.Amac, t.OlusturulmaTarihi });
+
+            modelBuilder.Entity<EpostaToken>()
+                .HasIndex(t => t.OlusturulmaTarihi);
 
             // Şube silinirse o şubeye ait masa bildirimleri de temizlenir.
             modelBuilder.Entity<MasaBildirim>()

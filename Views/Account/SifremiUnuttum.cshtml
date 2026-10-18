@@ -1,0 +1,21 @@
+@{
+    Layout = "_HesapLayout";
+    ViewData["Title"] = "Şifremi Unuttum";
+    ViewData["Baslik"] = "Şifreni mi Unuttun?";
+    ViewData["AltBaslik"] = "Kayıtlı e-posta adresini yaz, sana şifre sıfırlama bağlantısı gönderelim.";
+}
+
+<form asp-action="SifremiUnuttum" method="post" class="space-y-5">
+    <div>
+        <label class="block text-[13px] font-semibold text-gray-600 mb-1.5">E-Posta Adresiniz</label>
+        <input type="email" name="email" required placeholder="mail@isletmeniz.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-[15px] focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 outline-none transition-all" />
+    </div>
+
+    <button type="submit" class="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-[0.98]">
+        Sıfırlama Bağlantısı Gönder
+    </button>
+</form>
+
+<div class="text-center mt-6">
+    <a asp-action="Login" class="text-[14px] text-blue-600 font-bold hover:underline">Giriş sayfasına dön</a>
+</div>

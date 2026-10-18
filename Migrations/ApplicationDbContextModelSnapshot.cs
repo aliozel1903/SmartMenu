@@ -63,6 +63,9 @@ namespace SmartMenu.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<bool>("EmailDogrulandi")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("KayitTarihi")
                         .HasColumnType("timestamp with time zone");
 
@@ -78,6 +81,46 @@ namespace SmartMenu.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Kafeler");
+                });
+
+            modelBuilder.Entity("SmartMenu.Models.EpostaToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Amac")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CafeId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("KullanilmaTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("OlusturulmaTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("SonKullanmaTarihi")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OlusturulmaTarihi");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("CafeId", "Amac", "OlusturulmaTarihi");
+
+                    b.ToTable("EpostaTokenlari");
                 });
 
             modelBuilder.Entity("SmartMenu.Models.Gorsel", b =>
@@ -361,6 +404,17 @@ namespace SmartMenu.Migrations
                     b.HasIndex("KategoriId");
 
                     b.ToTable("Urunler");
+                });
+
+            modelBuilder.Entity("SmartMenu.Models.EpostaToken", b =>
+                {
+                    b.HasOne("SmartMenu.Models.Cafe", "Cafe")
+                        .WithMany()
+                        .HasForeignKey("CafeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cafe");
                 });
 
             modelBuilder.Entity("SmartMenu.Models.Gorsel", b =>

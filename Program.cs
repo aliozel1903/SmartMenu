@@ -43,6 +43,12 @@ builder.Services.AddDataProtection()
 // İş mantığı servisleri. DbContext gibi istek başına (scoped) yaşarlar.
 builder.Services.AddScoped<TaramaAnomaliServisi>();
 builder.Services.AddScoped<GuvenliResimYukleyici>();
+builder.Services.AddScoped<HesapTokenServisi>();
+builder.Services.AddHttpClient<EpostaGonderici>(client =>
+{
+    client.BaseAddress = new Uri("https://api.resend.com/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 
 // Hız sınırlama: aynı IP'den kısa sürede gelen aşırı istekleri 429 ile reddeder.
 builder.Services.AddRateLimiter(options =>
@@ -67,6 +73,17 @@ builder.Services.AddRateLimiter(options =>
             {
                 PermitLimit = 5,
                 Window = TimeSpan.FromMinutes(1)
+            }));
+
+    // E-posta gönderen formlar (şifremi unuttum, doğrulama bağlantısını tekrar gönder).
+    // Hesap başına ve günlük toplam sınırlar ayrıca HesapTokenServisi'nde.
+    options.AddPolicy("eposta", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "bilinmiyor",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 3,
+                Window = TimeSpan.FromMinutes(10)
             }));
 });
 

@@ -29,6 +29,10 @@ namespace SmartMenu.Models
         [StringLength(255)]
         public string? LogoUrl { get; set; }
 
+        // Kayıt olan kişi e-posta adresinin gerçekten kendisine ait olduğunu, gönderilen bağlantıya
+        // tıklayarak kanıtlayana kadar giriş yapamaz. Böylece sahte adreslerle açılan hesaplar kullanılamaz.
+        public bool EmailDogrulandi { get; set; }
+
         public DateTime KayitTarihi { get; set; } = DateTime.UtcNow;
     }
 }

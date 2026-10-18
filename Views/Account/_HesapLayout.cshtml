@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @* Şifre sıfırlama adresindeki token, sayfanın yüklediği dış kaynaklara (CDN, font) Referer başlığıyla gitmesin. *@
+    <meta name="referrer" content="no-referrer" />
+    <title>@ViewData["Title"] - SmartMenu</title>
+    <link rel="icon" type="image/png" href="~/img/smartmenu-logo.png" />
+    <link rel="apple-touch-icon" href="~/img/smartmenu-logo.png" />
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F9FA; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white w-full max-w-md p-8 md:p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+
+        <div class="text-center mb-8">
+            <a asp-controller="Home" asp-action="Index" class="text-2xl font-extrabold tracking-tighter text-blue-600">Smart<span class="text-gray-800">Menu</span></a>
+            <h2 class="text-xl font-bold text-gray-800 mt-2">@ViewData["Baslik"]</h2>
+            @if (ViewData["AltBaslik"] is string altBaslik)
+            {
+                <p class="text-sm text-gray-500 mt-1">@altBaslik</p>
+            }
+        </div>
+
+        @if (ViewBag.Hata is string hata)
+        {
+            <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700">@hata</div>
+        }
+        @if (ViewBag.Bilgi is string bilgi)
+        {
+            <div class="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-[14px] text-green-800">@bilgi</div>
+        }
+
+        @RenderBody()
+    </div>
+
+</body>
+</html>

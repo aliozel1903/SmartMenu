@@ -128,6 +128,10 @@
 </div>
 <div class="bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 transition-all">
 <form asp-action="Login" method="post" class="space-y-lg">
+@if (TempData["Basari"] is string basari)
+{
+<div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">@basari</div>
+}
 <div asp-validation-summary="All" class="text-error font-body-md text-sm"></div>
 <div class="space-y-xs">
 <label class="font-label-md text-label-md text-on-surface-variant block ml-1" for="email">E-Posta Adresi</label>
@@ -151,13 +155,21 @@
 <input class="w-5 h-5 rounded-[4px] border-outline-variant text-primary focus:ring-primary transition-all cursor-pointer" type="checkbox" name="rememberMe" value="true"/>
 <span class="ml-sm font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors">Beni Hatırla</span>
 </label>
-<a class="font-label-md text-label-md text-primary hover:underline" href="#">Şifremi Unuttum</a>
+<a class="font-label-md text-label-md text-primary hover:underline" asp-action="SifremiUnuttum">Şifremi Unuttum</a>
 </div>
 <button class="w-full py-4 bg-primary-container text-on-primary-container rounded-xl font-button text-button hover:bg-primary transition-all active:scale-[0.98] flex items-center justify-center gap-2" type="submit">
             Giriş Yap
             <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
 </button>
 </form>
+@* Şifresi doğru ama e-postası doğrulanmamış hesaplar için. Adres URL'ye değil gizli form alanına konur. *@
+@if (ViewBag.DogrulanmamisEposta is string dogrulanmamisEposta)
+{
+<form asp-action="Dogrulama" method="post" class="mt-md">
+<input type="hidden" name="email" value="@dogrulanmamisEposta"/>
+<button class="w-full py-3 border border-outline-variant rounded-xl font-label-md text-label-md text-primary hover:bg-surface-container-low transition-all" type="submit">Doğrulama Bağlantısını Tekrar Gönder</button>
+</form>
+}
 </div>
 <div class="mt-xl text-center">
 <a asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 font-label-md text-label-md text-primary hover:text-on-tertiary-fixed-variant transition-colors group"><span class="material-symbols-outlined text-[18px] transition-transform group-hover:-translate-x-1" data-icon="arrow_back">arrow_back</span> Ana Sayfaya Dön</a>

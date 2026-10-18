@@ -1,0 +1,36 @@
+@{
+    Layout = "_HesapLayout";
+    ViewData["Title"] = "Yeni Şifre";
+    ViewData["Baslik"] = "Yeni Şifreni Belirle";
+}
+
+@if (ViewBag.Gecersiz == true)
+{
+    <p class="text-[15px] text-gray-600 leading-6 mb-6">
+        Bu şifre sıfırlama bağlantısı geçersiz, süresi dolmuş ya da daha önce kullanılmış.
+        Bağlantılar 1 saat geçerlidir ve tek kullanımlıktır.
+    </p>
+    <a asp-action="SifremiUnuttum" class="block w-full py-3.5 text-center bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all">
+        Yeni Bağlantı İste
+    </a>
+}
+else
+{
+    <form asp-action="SifreSifirla" method="post" class="space-y-5">
+        <input type="hidden" name="token" value="@ViewBag.Token" />
+
+        <div>
+            <label class="block text-[13px] font-semibold text-gray-600 mb-1.5">Yeni Şifre</label>
+            <input type="password" name="sifre" required minlength="8" autocomplete="new-password" placeholder="En az 8 karakter" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-[15px] focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 outline-none transition-all" />
+        </div>
+
+        <div>
+            <label class="block text-[13px] font-semibold text-gray-600 mb-1.5">Yeni Şifre (Tekrar)</label>
+            <input type="password" name="sifreTekrar" required minlength="8" autocomplete="new-password" placeholder="••••••••" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-[15px] focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 outline-none transition-all" />
+        </div>
+
+        <button type="submit" class="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-[0.98]">
+            Şifremi Güncelle
+        </button>
+    </form>
+}
