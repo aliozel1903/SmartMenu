@@ -21,4 +21,15 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
   </ItemGroup>
 
+  <!-- Tailwind CSS: yerelde "npm install" yapılmışsa her derlemede wwwroot/css/tailwind-*.css yeniden üretilir.
+       Docker/Northflank derlemesinde node_modules olmadığı için bu adım atlanır ve depodaki hazır CSS kullanılır;
+       bu yüzden görünümlerde sınıf değiştirdikten sonra üretilen CSS de commit edilmelidir. -->
+  <Target Name="TailwindDerle" BeforeTargets="BeforeBuild" Condition="Exists('node_modules/.bin/tailwindcss')">
+    <Exec Command="npm run css --silent" />
+  </Target>
+
+  <ItemGroup>
+    <Content Update="package.json;package-lock.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
 </Project>

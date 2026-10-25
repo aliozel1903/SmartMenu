@@ -262,6 +262,10 @@ namespace SmartMenu.Controllers
         }
 
         // 3. ÇIKIŞ YAP (GÜVENLİ ÇIKIŞ)
+        // Sadece POST ve antiforgery token ile: GET olsaydı başka bir site, sayfasına gizlice koyduğu
+        // bir resim ya da link ile yöneticinin oturumunu habersizce kapatabilirdi.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(OturumYoneticisi.Sema);

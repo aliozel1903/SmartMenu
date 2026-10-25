@@ -1,211 +1,64 @@
-@{ Layout = null; }
-<!DOCTYPE html>
+@{
+    Layout = "_HesapLayout";
+    ViewData["Title"] = "Giriş Yap";
+    ViewData["Baslik"] = "Yönetim Paneli";
+    ViewData["AltBaslik"] = "Devam etmek için giriş yapın";
 
-<html class="light" lang="tr"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Star Kafe - Yönetim Paneli</title>
-<link rel="icon" type="image/png" href="~/img/smartmenu-logo.png" />
-<link rel="apple-touch-icon" href="~/img/smartmenu-logo.png" />
-<script src="https://cdn.tailwindcss.com/3.4.17?plugins=forms@0.5.10,container-queries@0.1.1"></script>
-<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          "colors": {
-            "tertiary": "#005491",
-            "secondary-fixed": "#dde3eb",
-            "on-tertiary": "#ffffff",
-            "surface-dim": "#ccdbf4",
-            "secondary": "#595f66",
-            "on-secondary-fixed": "#161c22",
-            "tertiary-fixed-dim": "#9fcaff",
-            "on-surface": "#0d1c2e",
-            "on-primary-fixed": "#001c38",
-            "on-error-container": "#93000a",
-            "tertiary-fixed": "#d2e4ff",
-            "background": "#f8f9ff",
-            "on-tertiary-fixed-variant": "#00497e",
-            "error": "#ba1a1a",
-            "inverse-on-surface": "#eaf1ff",
-            "on-background": "#0d1c2e",
-            "on-secondary-fixed-variant": "#41474e",
-            "outline": "#727782",
-            "primary": "#005394",
-            "on-primary": "#ffffff",
-            "on-primary-fixed-variant": "#004881",
-            "inverse-surface": "#223144",
-            "surface-container-highest": "#d4e4fc",
-            "on-tertiary-fixed": "#001d37",
-            "surface-container": "#e5eeff",
-            "on-surface-variant": "#414750",
-            "outline-variant": "#c1c7d2",
-            "primary-fixed": "#d3e4ff",
-            "secondary-fixed-dim": "#c1c7cf",
-            "primary-container": "#2b6cb0",
-            "surface": "#f8f9ff",
-            "on-tertiary-container": "#e1ecff",
-            "on-secondary-container": "#5f656c",
-            "surface-bright": "#f8f9ff",
-            "on-error": "#ffffff",
-            "surface-tint": "#1960a3",
-            "error-container": "#ffdad6",
-            "primary-fixed-dim": "#a2c9ff",
-            "surface-variant": "#d4e4fc",
-            "secondary-container": "#dde3eb",
-            "on-secondary": "#ffffff",
-            "on-primary-container": "#e1ecff",
-            "tertiary-container": "#076db8",
-            "surface-container-lowest": "#ffffff",
-            "inverse-primary": "#a2c9ff",
-            "surface-container-high": "#dce9ff",
-            "surface-container-low": "#eff4ff"
-          },
-          "borderRadius": {
-            "DEFAULT": "0.25rem",
-            "lg": "0.5rem",
-            "xl": "0.75rem",
-            "full": "9999px"
-          },
-          "spacing": {
-            "lg": "24px",
-            "xxl": "48px",
-            "xs": "4px",
-            "sm": "8px",
-            "gutter": "16px",
-            "md": "16px",
-            "unit": "4px",
-            "margin": "24px",
-            "xl": "32px"
-          },
-          "fontFamily": {
-            "headline-md": ["Work Sans"],
-            "button": ["Work Sans"],
-            "body-md": ["Work Sans"],
-            "body-lg": ["Work Sans"],
-            "headline-lg": ["Work Sans"],
-            "label-md": ["Work Sans"]
-          },
-          "fontSize": {
-            "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
-            "button": ["16px", {"lineHeight": "20px", "fontWeight": "600"}],
-            "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
-            "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
-            "headline-lg": ["30px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
-            "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}]
-          }
-        },
-      },
-    }
-  </script>
-<style>
-    body { font-family: 'Work Sans', sans-serif; }
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-  </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
-  </style>
-</head>
-<body class="bg-surface-bright text-on-surface min-h-screen flex flex-col">
-<header class="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-6 py-4 w-full top-0">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-blue-700 dark:text-blue-400" data-icon="coffee">coffee</span>
-<h1 class="text-xl font-bold tracking-tight text-blue-700 dark:text-blue-400 font-['Work_Sans']">SmartMenu</h1>
-</div>
-</header>
-<main class="flex-grow flex items-center justify-center px-margin py-xxl">
-<div class="w-full max-w-[440px]">
-<div class="mb-xl text-center">
-<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Yönetim Paneli</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">Lütfen devam etmek için oturum açın.</p>
-</div>
-<div class="bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 transition-all">
-<form asp-action="Login" method="post" class="space-y-lg">
-@if (TempData["Basari"] is string basari)
-{
-<div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">@basari</div>
+    // Şablon (_HesapLayout) hata ve bilgi kutularını ViewBag'den çizer.
+    ViewBag.Bilgi = TempData["Basari"] as string;
+    ViewBag.Hata = ViewData.ModelState[string.Empty]?.Errors.FirstOrDefault()?.ErrorMessage;
 }
-<div asp-validation-summary="All" class="text-error font-body-md text-sm"></div>
-<div class="space-y-xs">
-<label class="font-label-md text-label-md text-on-surface-variant block ml-1" for="email">E-Posta Adresi</label>
-<div class="relative">
-<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline" data-icon="person">person</span>
-<input class="w-full pl-12 pr-4 py-3 bg-white border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-body-md text-body-md" id="email" name="email" required placeholder="e-posta@example.com" type="email"/>
-</div>
-</div>
-<div class="space-y-xs">
-<label class="font-label-md text-label-md text-on-surface-variant block ml-1" for="password">Şifre</label>
-<div class="relative">
-<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline" data-icon="lock">lock</span>
-<input class="w-full pl-12 pr-12 py-3 bg-white border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-body-md text-body-md" id="password" name="password" required placeholder="••••••••" type="password"/>
-<button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors" type="button" id="togglePassword">
-<span class="material-symbols-outlined" id="togglePasswordIcon" data-icon="visibility">visibility</span>
-</button>
-</div>
-</div>
-<div class="flex items-center justify-between py-xs">
-<label class="flex items-center cursor-pointer group">
-<input class="w-5 h-5 rounded-[4px] border-outline-variant text-primary focus:ring-primary transition-all cursor-pointer" type="checkbox" name="rememberMe" value="true"/>
-<span class="ml-sm font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors">Beni Hatırla</span>
-</label>
-<a class="font-label-md text-label-md text-primary hover:underline" asp-action="SifremiUnuttum">Şifremi Unuttum</a>
-</div>
-<button class="w-full py-4 bg-primary-container text-on-primary-container rounded-xl font-button text-button hover:bg-primary transition-all active:scale-[0.98] flex items-center justify-center gap-2" type="submit">
-            Giriş Yap
-            <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
-</button>
+
+<form asp-action="Login" method="post" class="space-y-5">
+    <div>
+        <label for="email" class="block text-[13px] font-semibold text-gray-600 mb-1.5">E-Posta Adresiniz</label>
+        <input id="email" type="email" name="email" required autocomplete="username" placeholder="mail@isletmeniz.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-[15px] focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 outline-none transition-all" />
+    </div>
+
+    <div>
+        <label for="password" class="block text-[13px] font-semibold text-gray-600 mb-1.5">Şifre</label>
+        <div class="relative">
+            <input id="password" type="password" name="password" required autocomplete="current-password" placeholder="••••••••" class="w-full pl-4 pr-20 py-3 bg-gray-50 border border-gray-200 rounded-xl text-[15px] focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 outline-none transition-all" />
+            <button type="button" id="sifreGoster" class="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-[13px] font-semibold text-gray-500 hover:text-blue-600">Göster</button>
+        </div>
+    </div>
+
+    <div class="flex items-center justify-between">
+        <label class="flex items-center gap-2 cursor-pointer text-[14px] text-gray-600">
+            <input type="checkbox" name="rememberMe" value="true" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600" />
+            Beni Hatırla
+        </label>
+        <a asp-action="SifremiUnuttum" class="text-[14px] font-semibold text-blue-600 hover:underline">Şifremi Unuttum</a>
+    </div>
+
+    <button type="submit" class="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-[0.98]">
+        Giriş Yap
+    </button>
 </form>
+
 @* Şifresi doğru ama e-postası doğrulanmamış hesaplar için. Adres URL'ye değil gizli form alanına konur. *@
 @if (ViewBag.DogrulanmamisEposta is string dogrulanmamisEposta)
 {
-<form asp-action="Dogrulama" method="post" class="mt-md">
-<input type="hidden" name="email" value="@dogrulanmamisEposta"/>
-<button class="w-full py-3 border border-outline-variant rounded-xl font-label-md text-label-md text-primary hover:bg-surface-container-low transition-all" type="submit">Doğrulama Bağlantısını Tekrar Gönder</button>
-</form>
+    <form asp-action="Dogrulama" method="post" class="mt-4">
+        <input type="hidden" name="email" value="@dogrulanmamisEposta" />
+        <button type="submit" class="w-full py-3 border border-gray-200 rounded-xl text-[14px] font-semibold text-blue-600 hover:bg-gray-50 transition-all">
+            Doğrulama Bağlantısını Tekrar Gönder
+        </button>
+    </form>
 }
-</div>
-<div class="mt-xl text-center">
-<a asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 font-label-md text-label-md text-primary hover:text-on-tertiary-fixed-variant transition-colors group"><span class="material-symbols-outlined text-[18px] transition-transform group-hover:-translate-x-1" data-icon="arrow_back">arrow_back</span> Ana Sayfaya Dön</a>
-</div>
-</div>
-</main>
-<footer class="flex flex-col md:flex-row justify-center items-center gap-4 py-8 w-full bg-transparent">
-<p class="font-['Work_Sans'] text-xs text-slate-400 dark:text-slate-500">© 2024 Cafe Management System</p>
-<div class="flex gap-4">
-<a class="font-['Work_Sans'] text-xs text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-300 transition-opacity duration-200" href="#">Privacy Policy</a>
-<a class="font-['Work_Sans'] text-xs text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-300 transition-opacity duration-200" href="#">Terms of Service</a>
-<a class="font-['Work_Sans'] text-xs text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-300 transition-opacity duration-200" href="#">Help Center</a>
-</div>
-</footer>
-<div class="fixed top-0 right-0 p-8 opacity-10 pointer-events-none -z-10 overflow-hidden hidden md:block">
-<span class="material-symbols-outlined text-[320px] text-primary" data-icon="coffee" style="font-variation-settings: 'wght' 100;">coffee</span>
+
+<div class="text-center mt-6 space-y-2">
+    <p class="text-[14px] text-gray-500">Hesabınız yok mu? <a asp-action="Register" class="text-blue-600 font-bold hover:underline">Kayıt Ol</a></p>
+    <a asp-controller="Home" asp-action="Index" class="inline-block text-[13px] text-gray-400 hover:text-gray-600">← Ana sayfaya dön</a>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const togglePassword = document.getElementById('togglePassword');
-        const passwordInput = document.getElementById('password');
-        const toggleIcon = document.getElementById('togglePasswordIcon');
-
-        if(togglePassword && passwordInput && toggleIcon) {
-            togglePassword.addEventListener('click', function() {
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-                
-                if (type === 'password') {
-                    toggleIcon.textContent = 'visibility';
-                } else {
-                    toggleIcon.textContent = 'visibility_off';
-                }
-            });
-        }
-    });
-</script>
-</body></html>
+@section Scripts {
+    <script>
+        document.getElementById('sifreGoster').addEventListener('click', function () {
+            const input = document.getElementById('password');
+            const gizli = input.type === 'password';
+            input.type = gizli ? 'text' : 'password';
+            this.textContent = gizli ? 'Gizle' : 'Göster';
+        });
+    </script>
+}

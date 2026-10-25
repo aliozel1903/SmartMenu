@@ -8,6 +8,10 @@
         // Sol menüdeki kırmızı rozet sadece giriş yapan markanın okunmamış masa bildirimlerini sayar.
         okunmamisBildirimSayisi = LayoutDb.MasaBildirimleri.Count(b => !b.OkunduMu && b.Sube != null && b.Sube.CafeId == layoutCafeId);
     }
+
+    // Başlıktaki selamlama ve profil düğmesindeki harf giriş yapan kafenin adından gelir.
+    var kafeAdi = User.Identity?.Name ?? string.Empty;
+    var basHarf = kafeAdi.Length > 0 ? kafeAdi.Substring(0, 1).ToUpper(new System.Globalization.CultureInfo("tr-TR")) : "?";
 }
 <!DOCTYPE html>
 <html class="light" lang="tr">
@@ -18,41 +22,13 @@
     <link rel="icon" type="image/png" href="~/img/smartmenu-logo.png" />
     <link rel="apple-touch-icon" href="~/img/smartmenu-logo.png" />
     
-    <script src="https://cdn.tailwindcss.com/3.4.17?plugins=forms@0.5.10,container-queries@0.1.1"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet" />
     
+    <link rel="stylesheet" href="~/css/tailwind-panel.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SmartMenu.styles.css" asp-append-version="true" />
 
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "primary": "#0058bc",
-                        "primary-container": "#0070eb",
-                        "background": "#f5f5f7",
-                        "surface": "#fcf8fb",
-                        "on-surface": "#1b1b1d",
-                        "on-surface-variant": "#414755",
-                        "surface-container-lowest": "#ffffff",
-                        "surface-container": "#f0edef",
-                        "outline-variant": "#c1c6d7",
-                        "error": "#ba1a1a",
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "card": "20px"
-                    }
-                }
-            }
-        }
-    </script>
-    
     <style>
         body { font-family: 'Inter', sans-serif; min-height: max(884px, 100dvh); }
         .card-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
@@ -113,7 +89,7 @@
 
     <header class="sticky top-0 z-40 w-full bg-surface-container-lowest/90 backdrop-blur-md px-4 py-4 lg:px-8 flex justify-between items-center shadow-sm">
         <div>
-            <h2 class="text-lg md:text-xl font-semibold text-on-surface">Merhaba, Star Kafe</h2>
+            <h2 class="text-lg md:text-xl font-semibold text-on-surface">Merhaba, @kafeAdi</h2>
             <p class="text-[11px] font-semibold text-on-surface-variant">Bugün neler yapıyoruz?</p>
         </div>
         
@@ -125,7 +101,7 @@
             
             <div class="relative">
                 <button onclick="toggleProfileMenu()" class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold shadow-md hover:bg-primary-container transition-all active:scale-95 focus:outline-none">
-                    S
+                    @basHarf
                 </button>
 
                 <div id="profileMenu" class="hidden absolute right-0 mt-3 w-48 bg-surface-container-lowest rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-surface-container py-2 z-50 transform opacity-0 scale-95 transition-all duration-200 origin-top-right">

@@ -1,0 +1,15 @@
+{
+  "name": "smartmenu-styles",
+  "private": true,
+  "description": "Tailwind CSS derlemesi. Çıktılar wwwroot/css altına yazılır ve depoya eklenir.",
+  "scripts": {
+    "css": "npm run css:panel && npm run css:site",
+    "css:panel": "tailwindcss -c Styles/tailwind.panel.config.js -i Styles/tailwind.css -o wwwroot/css/tailwind-panel.css --minify",
+    "css:site": "tailwindcss -c Styles/tailwind.site.config.js -i Styles/tailwind.css -o wwwroot/css/tailwind-site.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/container-queries": "0.1.1",
+    "@tailwindcss/forms": "0.5.10",
+    "tailwindcss": "3.4.17"
+  }
+}

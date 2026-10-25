@@ -17,3 +17,4 @@ wwwroot/img/logolar/
 # Yerel gizli ayarlar
 appsettings.*.local.json
 .env
+node_modules/
