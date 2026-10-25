@@ -46,6 +46,7 @@ builder.Services.AddDataProtection()
 builder.Services.AddScoped<TaramaAnomaliServisi>();
 builder.Services.AddScoped<GuvenliResimYukleyici>();
 builder.Services.AddScoped<HesapTokenServisi>();
+builder.Services.AddHealthChecks();
 builder.Services.AddHttpClient<EpostaGonderici>(client =>
 {
     client.BaseAddress = new Uri("https://api.resend.com/");
@@ -111,6 +112,12 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseForwardedHeaders();
+
+// Sağlık kontrolü: Northflank yeni sürümü açarken bu adres 200 dönene kadar trafiği eski sürümde tutar,
+// böylece deploy sırasında "Connection refused" sayfası çıkmaz. HTTPS yönlendirmesinden önce durur, çünkü
+// Northflank kapsayıcıya doğrudan HTTP ile sorar. Veritabanını kontrol etmez: birkaç saniyede bir gelen
+// istekler Neon'un uykuya geçmesini engelleyip ücretsiz kullanım süresini tüketirdi.
+app.UseHealthChecks("/saglik");
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
