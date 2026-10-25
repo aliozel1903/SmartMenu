@@ -59,7 +59,7 @@
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <span class="text-on-surface-variant font-semibold">₺</span>
                             </div>
-                            <input asp-for="Fiyat" type="text" class="w-full bg-surface-container py-3 pl-9 pr-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all" placeholder="0,00" oninput="this.value = this.value.replace('.', ',');" />
+                            <input asp-for="Fiyat" type="text" value="@(ViewData.ModelState["Fiyat"]?.AttemptedValue ?? (Model?.Fiyat > 0 ? Model.Fiyat.ToString() : ""))" class="w-full bg-surface-container py-3 pl-9 pr-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all" placeholder="0,00" oninput="this.value = this.value.replace('.', ',');" />
                         </div>
                     </div>
                 </div>
