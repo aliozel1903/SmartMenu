@@ -39,6 +39,27 @@ namespace SmartMenu.Controllers
             return View(siparisler);
         }
 
+        // Mutfak fişi: siparişi termal yazıcıya (58/80 mm) uygun dar bir sayfada açar,
+        // sayfa açılınca tarayıcının yazdırma penceresi kendiliğinden gelir.
+        public async Task<IActionResult> Fis(int id)
+        {
+            int myCafeId = GetCurrentCafeId();
+            var siparis = await _context.Siparisler
+                .Include(s => s.Sube)
+                    .ThenInclude(s => s!.Cafe)
+                .Include(s => s.Detaylar)
+                    .ThenInclude(d => d.Urun)
+                .FirstOrDefaultAsync(s => s.Id == id && s.Sube != null && s.Sube.CafeId == myCafeId);
+
+            // Başka markanın siparişi de "bulunamadı" görünür; var olup olmadığı belli edilmez.
+            if (siparis == null)
+            {
+                return NotFound();
+            }
+
+            return View(siparis);
+        }
+
         public async Task<IActionResult> Bildirimler()
         {
             int myCafeId = GetCurrentCafeId();

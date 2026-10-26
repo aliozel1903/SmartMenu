@@ -1,0 +1,141 @@
+@model SmartMenu.Models.Siparis
+@{
+    // Fiş panel şablonu olmadan, sadece yazdırılacak içerikle açılır.
+    Layout = null;
+    var culture = new System.Globalization.CultureInfo("tr-TR");
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Fiş #@Model.Id · Masa @Model.MasaNo</title>
+    <style>
+        /* Kağıt boyunu yazıcının kendi ayarı belirler. Termal yazıcılar zaten kenar payı bıraktığı için
+           sayfa payını sıfırlıyoruz; içerik 80 mm'yi geçmiyor, 58 mm rulolarda da sığacak kadar daralıyor. */
+        @@page { margin: 0; }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #fff;
+            color: #000;
+            font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace;
+            font-size: 12pt;
+            line-height: 1.35;
+        }
+
+        /* Termal yazıcı gri basamaz; her şey düz siyah ve okunaklı kalın. */
+        .fis {
+            width: 100%;
+            max-width: 80mm;
+            padding: 3mm;
+        }
+
+        .orta { text-align: center; }
+        .marka { font-size: 14pt; font-weight: 700; }
+        .baslik { margin-top: 1mm; font-weight: 700; letter-spacing: 1px; }
+        .masa { margin: 1mm 0; font-size: 24pt; font-weight: 800; }
+        .cizgi { margin: 2mm 0; border-top: 1px dashed #000; }
+
+        /* Sığmazsa alt satıra geçer ama "Sipariş #9" ya da tarih kendi içinde bölünmez. */
+        .satir { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 2mm; }
+        .satir span { white-space: nowrap; }
+
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 1mm 0; vertical-align: top; }
+        .adet { width: 1%; padding-right: 2mm; white-space: nowrap; font-size: 14pt; font-weight: 800; }
+        .urun { font-size: 13pt; font-weight: 700; overflow-wrap: break-word; }
+        .tutar { padding-left: 2mm; white-space: nowrap; text-align: right; }
+
+        .toplam { font-size: 13pt; font-weight: 800; }
+
+        /* 58 mm rulo: aynı düzen, biraz daha küçük yazı. */
+        @@media (max-width: 64mm) {
+            body { font-size: 10pt; }
+            .marka { font-size: 12pt; }
+            .masa { font-size: 20pt; }
+            .adet { font-size: 12pt; }
+            .urun, .toplam { font-size: 11pt; }
+        }
+
+        .araclar {
+            display: flex;
+            gap: 8px;
+            max-width: 80mm;
+            padding: 0 3mm 3mm;
+            font-family: system-ui, sans-serif;
+        }
+
+        .araclar button {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #000;
+            border-radius: 8px;
+            background: #fff;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .araclar button.ana { background: #000; color: #fff; }
+
+        @@media print {
+            .araclar { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <main class="fis">
+        <div class="orta">
+            <div class="marka">@Model.Sube?.Cafe?.Ad</div>
+            @* Kayıtta açılan ilk şube kafenin adını taşır; aynı ad iki kez basılmasın. *@
+            @if (Model.Sube?.SubeAdi != Model.Sube?.Cafe?.Ad)
+            {
+                <div>@Model.Sube?.SubeAdi</div>
+            }
+            <div class="baslik">MUTFAK FİŞİ</div>
+        </div>
+
+        <div class="cizgi"></div>
+
+        <div class="orta masa">MASA @Model.MasaNo</div>
+        <div class="satir">
+            <span>Sipariş #@Model.Id</span>
+            <span>@Model.SiparisTarihi.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+        </div>
+
+        <div class="cizgi"></div>
+
+        <table>
+            @foreach (var detay in Model.Detaylar)
+            {
+                <tr>
+                    <td class="adet">@detay.Adet x</td>
+                    <td class="urun">@(detay.Urun?.Ad ?? "Ürün")</td>
+                    <td class="tutar">@((detay.Adet * detay.BirimFiyat).ToString("C", culture))</td>
+                </tr>
+            }
+        </table>
+
+        <div class="cizgi"></div>
+
+        <div class="satir toplam">
+            <span>TOPLAM</span>
+            <span>@Model.ToplamTutar.ToString("C", culture)</span>
+        </div>
+    </main>
+
+    @* Bu düğmeler yazdırılan kağıtta görünmez; yazdırma penceresi kapatılırsa tekrar açmak içindir. *@
+    <div class="araclar">
+        <button type="button" class="ana" onclick="window.print()">Yazdır</button>
+        <button type="button" onclick="window.close()">Kapat</button>
+    </div>
+
+    <script>
+        window.addEventListener('load', function () { window.print(); });
+    </script>
+</body>
+</html>

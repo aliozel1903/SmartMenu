@@ -82,6 +82,16 @@
                     </div>
 
                     <div class="mt-4 flex flex-wrap justify-end gap-2">
+                        @* Fiş yeni sekmede açılır; mutfak ekranı yerinde kalır ve yazdırma bitince sekme kapatılır. *@
+                        @if (siparis.Durum != "İptal")
+                        {
+                            <a asp-action="Fis" asp-route-id="@siparis.Id" target="_blank" rel="noopener"
+                               class="inline-flex items-center gap-1.5 rounded-xl bg-surface-container px-4 py-2 text-sm font-bold text-on-surface hover:bg-gray-200">
+                                <span class="material-symbols-outlined text-[18px]">print</span>
+                                Fiş Yazdır
+                            </a>
+                        }
+
                         @if (siparis.Durum != "Hazırlanıyor" && siparis.Durum != "Tamamlandı" && siparis.Durum != "İptal")
                         {
                             <form asp-action="DurumGuncelle" method="post" class="m-0">
