@@ -141,37 +141,51 @@
         const menuToken = @Html.Raw(Json.Serialize(menuToken));
     </script>
 
-    @if (garsonCagriAktif || hesapIsteAktif)
+    @* Garson, Hesap ve Sepet tek satırlık alt çubukta durur. Eskiden ayrı ayrı yüzen düğmelerdi ve
+       telefonda ürün kartlarının üstünü kapatıyorlardı. Sepet açıksa servis düğmeleri dar tutulur,
+       sepet kalan genişliği alır; sipariş kapalıysa servis düğmeleri satırı paylaşır. *@
+    @if (garsonCagriAktif || hesapIsteAktif || siparisAktif)
     {
-        <div class="fixed bottom-5 left-5 z-50 flex flex-col gap-2">
-            @if (garsonCagriAktif)
-            {
-                <button type="button"
-                        class="service-call-button inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-xs font-extrabold text-stone-900 shadow-[0_10px_28px_rgba(0,0,0,0.16)] ring-1 ring-stone-200 transition active:scale-[0.98]"
-                        data-type="Garson">
-                    <span class="material-symbols-outlined text-[18px]">room_service</span>
-                    Garson Çağır
-                </button>
-            }
+        var servisDugmeGenisligi = siparisAktif ? "w-16 flex-shrink-0" : "flex-1";
 
-            @if (hesapIsteAktif)
-            {
-                <button type="button"
-                        class="service-call-button inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-xs font-extrabold text-stone-900 shadow-[0_10px_28px_rgba(0,0,0,0.16)] ring-1 ring-stone-200 transition active:scale-[0.98]"
-                        data-type="Hesap">
-                    <span class="material-symbols-outlined text-[18px]">payments</span>
-                    Hesap İste
-                </button>
-            }
+        <div class="fixed inset-x-0 bottom-0 z-50 border-t border-stone-200 bg-white/95 px-3 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] backdrop-blur-xl">
+            <div class="mx-auto flex w-full max-w-3xl items-stretch gap-2">
+                @if (garsonCagriAktif)
+                {
+                    <button type="button"
+                            class="service-call-button @servisDugmeGenisligi flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-[11px] font-extrabold text-stone-800 transition hover:bg-stone-100 active:scale-[0.98]"
+                            data-type="Garson"
+                            aria-label="Garson çağır">
+                        <span class="material-symbols-outlined text-[22px]">room_service</span>
+                        Garson
+                    </button>
+                }
+
+                @if (hesapIsteAktif)
+                {
+                    <button type="button"
+                            class="service-call-button @servisDugmeGenisligi flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-[11px] font-extrabold text-stone-800 transition hover:bg-stone-100 active:scale-[0.98]"
+                            data-type="Hesap"
+                            aria-label="Hesap iste">
+                        <span class="material-symbols-outlined text-[22px]">payments</span>
+                        Hesap
+                    </button>
+                }
+
+                @if (siparisAktif)
+                {
+                    <button id="cartButton" type="button" class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-3 text-sm font-extrabold text-white active:scale-[0.98]">
+                        <span class="material-symbols-outlined text-[20px]">shopping_bag</span>
+                        Sepetim
+                        <span id="cartCount" class="min-w-6 rounded-full bg-white/20 px-2 py-0.5 text-center text-xs">0</span>
+                    </button>
+                }
+            </div>
         </div>
     }
 
     @if (siparisAktif)
     {
-    <button id="cartButton" type="button" class="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 rounded-full bg-amber-700 px-5 py-3 text-sm font-extrabold text-white shadow-[0_12px_30px_rgba(180,83,9,0.35)] active:scale-[0.98]">
-        <span class="material-symbols-outlined text-[20px]">shopping_bag</span>
-        Sepetim (<span id="cartCount">0</span>)
-    </button>
 
     <div id="cartModal" class="fixed inset-0 z-[60] hidden bg-black/50 px-4 py-6 backdrop-blur-sm">
         <div class="mx-auto flex h-full max-w-md items-end sm:items-center">
