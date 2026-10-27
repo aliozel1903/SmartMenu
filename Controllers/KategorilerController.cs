@@ -131,7 +131,15 @@ namespace SmartMenu.Controllers
         {
             int myCafeId = GetCurrentCafeId();
             var kategori = await _context.Kategoriler.FirstOrDefaultAsync(k => k.Id == id && k.CafeId == myCafeId);
-            if (kategori != null)
+            if (kategori != null && await _context.SiparisDetaylari.AnyAsync(d => d.Urun != null && d.Urun.KategoriId == kategori.Id))
+            {
+                // Kategori silinince içindeki ürünler de silinir; ama siparişlerde geçen ürünler silinemez
+                // (eskiden burada hata sayfası çıkıyordu). Kategoriyi menüden gizliyoruz, düzenleme sayfasından geri açılabilir.
+                kategori.AktifMi = false;
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"{kategori.Ad} kategorisindeki ürünler geçmiş siparişlerde yer aldığı için silinmedi, menüden gizlendi.";
+            }
+            else if (kategori != null)
             {
                 _context.Kategoriler.Remove(kategori);
                 await _context.SaveChangesAsync();

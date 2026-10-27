@@ -232,13 +232,16 @@
 
             // Controller'lardan gelen TempData mesajlarını sağ üstte toast olarak gösteriyoruz.
             if (successMessage || errorMessage) {
+                const mesaj = successMessage || errorMessage;
                 Swal.fire({
                     toast: true,
                     position: 'top-end',
                     icon: successMessage ? 'success' : 'error',
-                    title: successMessage || errorMessage,
+                    // Mesajlar ürün/şube adı içerebilir; title HTML işlediği için düz metin olan titleText kullanılır.
+                    titleText: mesaj,
                     showConfirmButton: false,
-                    timer: 2600,
+                    // Uzun açıklamalı mesajlar okunabilsin diye ekranda daha uzun kalır.
+                    timer: Math.max(2600, mesaj.length * 60),
                     timerProgressBar: true,
                     background: '#ffffff',
                     color: '#1b1b1d'

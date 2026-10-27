@@ -492,7 +492,7 @@ namespace SmartMenu.Migrations
                     b.HasOne("SmartMenu.Models.Sube", "Sube")
                         .WithMany()
                         .HasForeignKey("SubeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Sube");

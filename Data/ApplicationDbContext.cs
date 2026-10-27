@@ -39,6 +39,14 @@ namespace SmartMenu.Data
                 .HasForeignKey(d => d.SiparisId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Siparişi olan şube silinemez: silinseydi siparişleri de gider, ciro ve satış geçmişi kaybolurdu.
+            // SubelerController zaten kontrol ediyor; bu, veritabanı seviyesindeki ikinci güvence.
+            modelBuilder.Entity<Siparis>()
+                .HasOne(s => s.Sube)
+                .WithMany()
+                .HasForeignKey(s => s.SubeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<SiparisDetay>()
                 .HasOne(d => d.Urun)
                 .WithMany()

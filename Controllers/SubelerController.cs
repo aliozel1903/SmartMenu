@@ -157,7 +157,12 @@ namespace SmartMenu.Controllers
             int myCafeId = GetCurrentCafeId();
             var sube = await _context.Subeler.FirstOrDefaultAsync(s => s.Id == id && s.CafeId == myCafeId);
 
-            if (sube != null)
+            if (sube != null && await _context.Siparisler.AnyAsync(s => s.SubeId == sube.Id))
+            {
+                // Şube silinseydi siparişleri de silinir, Kasa'daki ciro ve satış geçmişi kaybolurdu.
+                TempData["Error"] = $"{sube.SubeAdi} şubesinin geçmiş siparişleri olduğu için silinemez. Sipariş almayı durdurmak için \"Sipariş Açık\" düğmesiyle kapatabilirsiniz.";
+            }
+            else if (sube != null)
             {
                 _context.Subeler.Remove(sube);
                 await _context.SaveChangesAsync();

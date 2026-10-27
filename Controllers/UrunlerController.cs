@@ -145,7 +145,15 @@ namespace SmartMenu.Controllers
         {
             var urun = await KendiUrunumuBulAsync(id, GetCurrentCafeId());
 
-            if (urun != null)
+            if (urun != null && await _context.SiparisDetaylari.AnyAsync(d => d.UrunId == urun.Id))
+            {
+                // Geçmiş siparişler ürüne bağlı; silinirse Kasa'daki ciro ve sipariş geçmişi bozulurdu
+                // (veritabanı da buna izin vermiyor, eskiden burada hata sayfası çıkıyordu). Ürünü gizliyoruz.
+                urun.AktifMi = false;
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"{urun.Ad} geçmiş siparişlerde yer aldığı için silinmedi, menüden gizlendi.";
+            }
+            else if (urun != null)
             {
                 var eskiResim = urun.ResimUrl;
 
