@@ -117,7 +117,9 @@
                                             class="add-to-cart mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#181512] px-3 py-2 text-[12px] font-extrabold text-white transition active:scale-[0.98]"
                                             data-id="@urun.Id"
                                             data-name="@urun.Ad"
-                                            data-price="@urun.Fiyat.ToString(invariantCulture)">
+                                            data-price="@urun.Fiyat.ToString(invariantCulture)"
+                                            data-resim="@urun.ResimUrl"
+                                            data-oneriler="@Json.Serialize(urun.Eslesmeler.Select(e => e.OnerilenUrunId))">
                                         <span class="material-symbols-outlined text-[16px]">add_shopping_cart</span>
                                         Sepete Ekle
                                     </button>
@@ -148,7 +150,7 @@
     {
         var servisDugmeGenisligi = siparisAktif ? "w-16 flex-shrink-0" : "flex-1";
 
-        <div class="fixed inset-x-0 bottom-0 z-50 border-t border-stone-200 bg-white/95 px-3 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] backdrop-blur-xl">
+        <div id="altCubuk" class="fixed inset-x-0 bottom-0 z-50 border-t border-stone-200 bg-white/95 px-3 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] backdrop-blur-xl">
             <div class="mx-auto flex w-full max-w-3xl items-stretch gap-2">
                 @if (garsonCagriAktif)
                 {
@@ -186,6 +188,26 @@
 
     @if (siparisAktif)
     {
+
+    @* "Yanına iyi gider": önerisi olan bir ürün sepete eklenince alt çubuğun hemen üstünde açılır.
+       İçindeki satırlar JavaScript ile sayfadaki ürün kartlarından doldurulur. *@
+    <div id="oneriPaneli" class="fixed inset-x-0 z-50 hidden px-3" aria-live="polite">
+        <div class="mx-auto w-full max-w-3xl rounded-2xl bg-white p-4 shadow-[0_12px_40px_rgba(0,0,0,0.18)] ring-1 ring-stone-200">
+            <div class="mb-3 flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="flex items-center gap-1.5 text-[13px] font-bold text-green-700">
+                        <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                        <span id="oneriEklenen" class="truncate"></span>
+                    </p>
+                    <p class="mt-1 text-[15px] font-extrabold text-stone-950">Yanına iyi gider</p>
+                </div>
+                <button id="oneriKapat" type="button" class="rounded-full p-1.5 text-stone-500 hover:bg-stone-100" aria-label="Kapat">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+            <div id="oneriListesi" class="space-y-2"></div>
+        </div>
+    </div>
 
     <div id="cartModal" class="fixed inset-0 z-[60] hidden bg-black/50 px-4 py-6 backdrop-blur-sm">
         <div class="mx-auto flex h-full max-w-md items-end sm:items-center">
@@ -315,26 +337,124 @@
             renderCart();
         }
 
+        // Ürünün bilgileri kartındaki "Sepete Ekle" düğmesinden okunur.
+        function sepeteEkle(button) {
+            const urunId = Number(button.dataset.id);
+            const cart = getCart();
+            const existing = cart.find(item => item.urunId === urunId);
+
+            if (existing) {
+                existing.adet++;
+            } else {
+                cart.push({
+                    urunId,
+                    ad: button.dataset.name,
+                    fiyat: Number(button.dataset.price),
+                    adet: 1
+                });
+            }
+
+            saveCart(cart);
+            renderCart();
+        }
+
+        const oneriPaneli = document.getElementById('oneriPaneli');
+        const oneriListesi = document.getElementById('oneriListesi');
+        const oneriEklenen = document.getElementById('oneriEklenen');
+        const altCubuk = document.getElementById('altCubuk');
+        let oneriZamanlayici = null;
+
+        function oneriPaneliniKapat() {
+            clearTimeout(oneriZamanlayici);
+            oneriPaneli.classList.add('hidden');
+        }
+
+        // Öneri satırı DOM ile kurulur, innerHTML kullanılmaz: ürün adı kafe sahibinin yazdığı metindir.
+        function oneriSatiri(kaynak) {
+            const satir = document.createElement('div');
+            satir.className = 'flex items-center gap-3 rounded-xl border border-stone-100 p-2';
+
+            const gorsel = document.createElement('div');
+            gorsel.className = 'flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-md bg-stone-100 text-stone-300';
+            if (kaynak.dataset.resim) {
+                const img = document.createElement('img');
+                img.src = kaynak.dataset.resim;
+                img.alt = '';
+                img.className = 'h-full w-full object-cover';
+                gorsel.appendChild(img);
+            } else {
+                const ikon = document.createElement('span');
+                ikon.className = 'material-symbols-outlined text-2xl';
+                ikon.textContent = 'restaurant';
+                gorsel.appendChild(ikon);
+            }
+
+            const bilgi = document.createElement('div');
+            bilgi.className = 'min-w-0 flex-1';
+            const ad = document.createElement('p');
+            ad.className = 'truncate text-sm font-extrabold text-stone-950';
+            ad.textContent = kaynak.dataset.name;
+            const fiyat = document.createElement('p');
+            fiyat.className = 'text-xs font-bold text-amber-700';
+            fiyat.textContent = formatCurrency(Number(kaynak.dataset.price));
+            bilgi.append(ad, fiyat);
+
+            const ekle = document.createElement('button');
+            ekle.type = 'button';
+            ekle.className = 'flex-shrink-0 rounded-lg bg-[#181512] px-3 py-2 text-xs font-extrabold text-white transition active:scale-[0.98]';
+            ekle.textContent = '+ Ekle';
+            ekle.addEventListener('click', function () {
+                sepeteEkle(kaynak);
+                ekle.disabled = true;
+                ekle.textContent = 'Eklendi';
+                ekle.className = 'flex-shrink-0 rounded-lg bg-green-50 px-3 py-2 text-xs font-extrabold text-green-700';
+
+                // Önerilerin hepsi eklendiyse kutunun işi bitti.
+                if (!oneriListesi.querySelector('button:not(:disabled)')) {
+                    setTimeout(oneriPaneliniKapat, 900);
+                }
+            });
+
+            satir.append(gorsel, bilgi, ekle);
+            return satir;
+        }
+
+        // Önerilen ürünler sayfadaki "Sepete Ekle" düğmelerinden bulunur. Böylece menüde gizli olan bir ürün
+        // önerilmez, sepette zaten olan bir ürün de tekrar önerilmez. Gösterilecek öneri yoksa false döner.
+        function onerileriGoster(button) {
+            const sepettekiler = new Set(getCart().map(item => item.urunId));
+            const adaylar = JSON.parse(button.dataset.oneriler || '[]')
+                .filter(id => !sepettekiler.has(id))
+                .map(id => document.querySelector(`.add-to-cart[data-id="${id}"]`))
+                .filter(Boolean);
+
+            if (adaylar.length === 0) {
+                oneriPaneliniKapat();
+                return false;
+            }
+
+            oneriEklenen.textContent = `${button.dataset.name} sepete eklendi`;
+            oneriListesi.replaceChildren(...adaylar.map(oneriSatiri));
+            oneriPaneli.style.bottom = `${altCubuk.offsetHeight + 8}px`;
+            oneriPaneli.classList.remove('hidden');
+
+            // Müşteri ilgilenmezse kutu kendiliğinden kapanır; kutuya dokunursa kendisi kapatana kadar açık kalır.
+            clearTimeout(oneriZamanlayici);
+            oneriZamanlayici = setTimeout(oneriPaneliniKapat, 10000);
+            return true;
+        }
+
+        oneriPaneli.addEventListener('pointerdown', () => clearTimeout(oneriZamanlayici));
+        document.getElementById('oneriKapat').addEventListener('click', oneriPaneliniKapat);
+
         document.querySelectorAll('.add-to-cart').forEach(button => {
             button.addEventListener('click', function () {
-                const urunId = Number(this.dataset.id);
-                const cart = getCart();
-                const existing = cart.find(item => item.urunId === urunId);
+                sepeteEkle(this);
 
-                if (existing) {
-                    existing.adet++;
-                } else {
-                    cart.push({
-                        urunId,
-                        ad: this.dataset.name,
-                        fiyat: Number(this.dataset.price),
-                        adet: 1
-                    });
+                // Önerisi varsa "sepete eklendi" bilgisi öneri kutusunda yazar; yoksa kısa bildirim çıkar.
+                if (!onerileriGoster(this)) {
+                    showMenuToast(`${this.dataset.name} sepete eklendi`);
                 }
-
-                saveCart(cart);
-                renderCart();
-                showMenuToast(`${this.dataset.name} sepete eklendi`);
             });
         });
 
@@ -347,6 +467,7 @@
         });
 
         cartButton.addEventListener('click', function () {
+            oneriPaneliniKapat();
             renderCart();
             cartModal.classList.remove('hidden');
         });

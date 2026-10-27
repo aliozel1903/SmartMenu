@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SmartMenu.Data;
 using SmartMenu.Models;
 using SmartMenu.Services;
+using SmartMenu.ViewModels;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -36,6 +37,42 @@ namespace SmartMenu.Controllers
                 .FirstOrDefaultAsync(u => u.Id == id && u.Kategori != null && u.Kategori.CafeId == cafeId);
         }
 
+        // Formdaki "Yanına İyi Gider" alanı için kafenin diğer ürünlerini hazırlar.
+        private async Task OneriSecimiHazirlaAsync(int cafeId, int? urunId, IEnumerable<int> secili)
+        {
+            var adaylar = await _context.Urunler
+                .Include(u => u.Kategori)
+                .Where(u => u.Kategori != null && u.Kategori.CafeId == cafeId && (urunId == null || u.Id != urunId))
+                .OrderBy(u => u.Kategori!.Sira)
+                .ThenBy(u => u.KategoriId)
+                .ThenBy(u => u.Id)
+                .ToListAsync();
+
+            ViewBag.OneriSecimi = new OneriSecimiViewModel { Adaylar = adaylar, Secili = secili.ToHashSet() };
+        }
+
+        // Formdan gelen öneri listesini süzer. Tarayıcıdan gelen veriye güvenmiyoruz: sınır aşılırsa,
+        // ürün kendisini önerirse ya da başka bir kafenin ürünü gönderilirse hata verir.
+        private async Task<List<int>> OnerileriDogrulaAsync(IEnumerable<int>? oneriler, int cafeId, int? urunId)
+        {
+            var istenen = (oneriler ?? Enumerable.Empty<int>()).Distinct().ToList();
+
+            if (istenen.Count > UrunEslesme.EnFazlaOneri)
+            {
+                ModelState.AddModelError(string.Empty, $"En fazla {UrunEslesme.EnFazlaOneri} öneri seçebilirsiniz.");
+                return istenen;
+            }
+
+            var gecerliSayisi = await _context.Urunler
+                .CountAsync(u => istenen.Contains(u.Id) && u.Id != urunId && u.Kategori != null && u.Kategori.CafeId == cafeId);
+            if (gecerliSayisi != istenen.Count)
+            {
+                ModelState.AddModelError(string.Empty, "Geçersiz öneri seçimi.");
+            }
+
+            return istenen;
+        }
+
         public async Task<IActionResult> Index()
         {
             int myCafeId = GetCurrentCafeId();
@@ -47,10 +84,11 @@ namespace SmartMenu.Controllers
             return View(urunler);
         }
 
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             int myCafeId = GetCurrentCafeId();
             ViewBag.KategoriId = new SelectList(_context.Kategoriler.Where(k => k.AktifMi && k.CafeId == myCafeId), "Id", "Ad");
+            await OneriSecimiHazirlaAsync(myCafeId, null, Enumerable.Empty<int>());
 
             // Yeni ürünler varsayılan olarak menüde görünür gelsin.
             return View(new Urun { AktifMi = true });
@@ -58,7 +96,7 @@ namespace SmartMenu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Ad,Icerik,Fiyat,KategoriId,AktifMi")] Urun urun, IFormFile? resim)
+        public async Task<IActionResult> Create([Bind("Ad,Icerik,Fiyat,KategoriId,AktifMi")] Urun urun, IFormFile? resim, List<int>? oneriler)
         {
             int myCafeId = GetCurrentCafeId();
             var isKategoriValid = await _context.Kategoriler.AnyAsync(k => k.Id == urun.KategoriId && k.CafeId == myCafeId);
@@ -66,6 +104,8 @@ namespace SmartMenu.Controllers
             {
                 ModelState.AddModelError("KategoriId", "Geçersiz kategori seçimi.");
             }
+
+            var oneriIdleri = await OnerileriDogrulaAsync(oneriler, myCafeId, null);
 
             if (ModelState.IsValid && resim != null)
             {
@@ -83,12 +123,19 @@ namespace SmartMenu.Controllers
 
             if (ModelState.IsValid)
             {
+                // Ürünün Id'si kayıtta oluşur; EF eşleşmelere onu kendisi yazar.
+                foreach (var oneriId in oneriIdleri)
+                {
+                    urun.Eslesmeler.Add(new UrunEslesme { OnerilenUrunId = oneriId });
+                }
+
                 _context.Add(urun);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
 
             ViewBag.KategoriId = new SelectList(_context.Kategoriler.Where(k => k.AktifMi && k.CafeId == myCafeId), "Id", "Ad", urun.KategoriId);
+            await OneriSecimiHazirlaAsync(myCafeId, null, oneriIdleri);
             return View(urun);
         }
 
@@ -143,6 +190,11 @@ namespace SmartMenu.Controllers
             if (urun == null) return NotFound();
 
             ViewBag.KategoriId = new SelectList(_context.Kategoriler.Where(k => k.AktifMi && k.CafeId == myCafeId), "Id", "Ad", urun.KategoriId);
+            var seciliOneriler = await _context.UrunEslesmeleri
+                .Where(e => e.UrunId == urun.Id)
+                .Select(e => e.OnerilenUrunId)
+                .ToListAsync();
+            await OneriSecimiHazirlaAsync(myCafeId, urun.Id, seciliOneriler);
             return View(urun);
         }
 
@@ -151,7 +203,7 @@ namespace SmartMenu.Controllers
         // Aksi halde istemci bu alana başka bir kafenin görselini ya da "../" ile bir sunucu dosyasını yazıp sildirebilirdi.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Ad,Icerik,Fiyat,KategoriId,AktifMi")] Urun urun, IFormFile? resim, bool resimSilindi = false)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Ad,Icerik,Fiyat,KategoriId,AktifMi")] Urun urun, IFormFile? resim, List<int>? oneriler, bool resimSilindi = false)
         {
             if (id != urun.Id) return NotFound();
 
@@ -168,6 +220,8 @@ namespace SmartMenu.Controllers
             {
                 ModelState.AddModelError("KategoriId", "Geçersiz kategori seçimi.");
             }
+
+            var oneriIdleri = await OnerileriDogrulaAsync(oneriler, myCafeId, id);
 
             string? yeniResimYolu = null;
             if (ModelState.IsValid && resim != null)
@@ -202,6 +256,14 @@ namespace SmartMenu.Controllers
                     mevcutUrun.ResimUrl = null;
                 }
 
+                // Önerilerde sadece farkı uyguluyoruz: kaldırılanları sil, yeni seçilenleri ekle.
+                var mevcutEslesmeler = await _context.UrunEslesmeleri.Where(e => e.UrunId == id).ToListAsync();
+                _context.UrunEslesmeleri.RemoveRange(mevcutEslesmeler.Where(e => !oneriIdleri.Contains(e.OnerilenUrunId)));
+                foreach (var oneriId in oneriIdleri.Where(o => mevcutEslesmeler.All(e => e.OnerilenUrunId != o)))
+                {
+                    _context.UrunEslesmeleri.Add(new UrunEslesme { UrunId = id, OnerilenUrunId = oneriId });
+                }
+
                 await _context.SaveChangesAsync();
 
                 // Görsel değiştiyse ya da kaldırıldıysa eskisini temizliyoruz.
@@ -216,6 +278,7 @@ namespace SmartMenu.Controllers
             // Doğrulama hatasında formun mevcut görseli göstermeye devam etmesi için.
             urun.ResimUrl = mevcutUrun.ResimUrl;
             ViewBag.KategoriId = new SelectList(_context.Kategoriler.Where(k => k.AktifMi && k.CafeId == myCafeId), "Id", "Ad", urun.KategoriId);
+            await OneriSecimiHazirlaAsync(myCafeId, id, oneriIdleri);
             return View(urun);
         }
     }

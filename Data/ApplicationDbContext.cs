@@ -25,6 +25,7 @@ namespace SmartMenu.Data
         public DbSet<MasaBildirim> MasaBildirimleri { get; set; }
         public DbSet<Gorsel> Gorseller { get; set; }
         public DbSet<EpostaToken> EpostaTokenlari { get; set; }
+        public DbSet<UrunEslesme> UrunEslesmeleri { get; set; }
         public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -99,6 +100,23 @@ namespace SmartMenu.Data
 
             modelBuilder.Entity<EpostaToken>()
                 .HasIndex(t => t.OlusturulmaTarihi);
+
+            // "Birlikte iyi gider" eşleşmeleri. Aynı öneri iki kez eklenemesin diye iki Id birlikte anahtar.
+            // Eşleşmenin iki ucundaki üründen biri silinirse eşleşme de silinir.
+            modelBuilder.Entity<UrunEslesme>()
+                .HasKey(e => new { e.UrunId, e.OnerilenUrunId });
+
+            modelBuilder.Entity<UrunEslesme>()
+                .HasOne(e => e.Urun)
+                .WithMany(u => u.Eslesmeler)
+                .HasForeignKey(e => e.UrunId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UrunEslesme>()
+                .HasOne(e => e.OnerilenUrun)
+                .WithMany()
+                .HasForeignKey(e => e.OnerilenUrunId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Şube silinirse o şubeye ait masa bildirimleri de temizlenir.
             modelBuilder.Entity<MasaBildirim>()

@@ -1,0 +1,64 @@
+@model SmartMenu.ViewModels.OneriSecimiViewModel
+@{
+    var enFazla = SmartMenu.Models.UrunEslesme.EnFazlaOneri;
+    var culture = new System.Globalization.CultureInfo("tr-TR");
+}
+
+@* "Birlikte iyi gider": müşteri bu ürünü sepete ekleyince burada seçilen ürünler önerilir. *@
+<div class="rounded-2xl border border-surface-container p-4">
+    <div class="flex items-start justify-between gap-4 mb-3">
+        <div>
+            <p class="text-[13px] font-semibold text-on-surface">Yanına İyi Gider</p>
+            <p class="text-[12px] text-on-surface-variant mt-1">Müşteri bu ürünü sepete ekleyince seçtiğiniz ürünler öneri olarak çıkar. En fazla @enFazla ürün seçebilirsiniz.</p>
+        </div>
+        <span id="oneriSayaci" class="flex-shrink-0 rounded-full bg-surface-container px-3 py-1 text-[12px] font-bold text-on-surface-variant">@Model.Secili.Count / @enFazla</span>
+    </div>
+
+    @if (!Model.Adaylar.Any())
+    {
+        <p class="text-[13px] text-on-surface-variant">Önerebilmek için önce başka ürünler eklemelisiniz.</p>
+    }
+    else
+    {
+        <div class="max-h-64 overflow-y-auto space-y-4 pr-1">
+            @foreach (var grup in Model.Adaylar.GroupBy(u => u.Kategori?.Ad ?? "Diğer"))
+            {
+                <div>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-2">@grup.Key</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        @foreach (var aday in grup)
+                        {
+                            <label class="oneri-secenek flex items-center gap-3 rounded-xl border border-surface-container px-3 py-2 cursor-pointer hover:bg-surface-container has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:disabled]:opacity-40 has-[:disabled]:cursor-not-allowed">
+                                <input type="checkbox" name="oneriler" value="@aday.Id" class="oneri-kutusu w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" @(Model.Secili.Contains(aday.Id) ? "checked" : "") />
+                                <span class="min-w-0 flex-1">
+                                    <span class="block truncate text-[14px] font-semibold text-on-surface">@aday.Ad</span>
+                                    <span class="block text-[12px] text-on-surface-variant">
+                                        @aday.Fiyat.ToString("C", culture)@(aday.AktifMi ? "" : " · Menüde gizli")
+                                    </span>
+                                </span>
+                            </label>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<script>
+    // En fazla seçim sayısına ulaşınca diğer kutular kilitlenir; sunucu da ayrıca kontrol eder.
+    (function () {
+        const enFazla = @enFazla;
+        const kutular = document.querySelectorAll('.oneri-kutusu');
+        const sayac = document.getElementById('oneriSayaci');
+
+        function guncelle() {
+            const secili = Array.from(kutular).filter(k => k.checked).length;
+            kutular.forEach(k => { k.disabled = !k.checked && secili >= enFazla; });
+            sayac.textContent = `${secili} / ${enFazla}`;
+        }
+
+        kutular.forEach(k => k.addEventListener('change', guncelle));
+        guncelle();
+    })();
+</script>

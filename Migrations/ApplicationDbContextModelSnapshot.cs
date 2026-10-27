@@ -411,6 +411,21 @@ namespace SmartMenu.Migrations
                     b.ToTable("Urunler");
                 });
 
+            modelBuilder.Entity("SmartMenu.Models.UrunEslesme", b =>
+                {
+                    b.Property<int>("UrunId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OnerilenUrunId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UrunId", "OnerilenUrunId");
+
+                    b.HasIndex("OnerilenUrunId");
+
+                    b.ToTable("UrunEslesmeleri");
+                });
+
             modelBuilder.Entity("SmartMenu.Models.EpostaToken", b =>
                 {
                     b.HasOne("SmartMenu.Models.Cafe", "Cafe")
@@ -524,6 +539,25 @@ namespace SmartMenu.Migrations
                     b.Navigation("Kategori");
                 });
 
+            modelBuilder.Entity("SmartMenu.Models.UrunEslesme", b =>
+                {
+                    b.HasOne("SmartMenu.Models.Urun", "OnerilenUrun")
+                        .WithMany()
+                        .HasForeignKey("OnerilenUrunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SmartMenu.Models.Urun", "Urun")
+                        .WithMany("Eslesmeler")
+                        .HasForeignKey("UrunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OnerilenUrun");
+
+                    b.Navigation("Urun");
+                });
+
             modelBuilder.Entity("SmartMenu.Models.Kategori", b =>
                 {
                     b.Navigation("Urunler");
@@ -532,6 +566,11 @@ namespace SmartMenu.Migrations
             modelBuilder.Entity("SmartMenu.Models.Siparis", b =>
                 {
                     b.Navigation("Detaylar");
+                });
+
+            modelBuilder.Entity("SmartMenu.Models.Urun", b =>
+                {
+                    b.Navigation("Eslesmeler");
                 });
 #pragma warning restore 612, 618
         }

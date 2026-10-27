@@ -32,8 +32,12 @@ namespace SmartMenu.Models
 // Bu ürün hangi kategoriye ait, bunu belirten foreign key
         public int KategoriId { get; set; }
 
-        [ValidateNever] 
+        [ValidateNever]
         [ForeignKey("KategoriId")]
-        public Kategori? Kategori { get; set; } 
+        public Kategori? Kategori { get; set; }
+
+        // Bu ürün sepete eklenince müşteriye "yanına iyi gider" diye önerilen ürünler.
+        [ValidateNever]
+        public ICollection<UrunEslesme> Eslesmeler { get; set; } = new List<UrunEslesme>();
     }
 }

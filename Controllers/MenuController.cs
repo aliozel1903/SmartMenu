@@ -94,6 +94,7 @@ namespace SmartMenu.Controllers
             // "AktifMi" durumu true olan kategorileri ve içindeki ürünleri Include ile getir.
             var kategoriler = await _context.Kategoriler
                 .Include(k => k.Urunler!.Where(u => u.AktifMi)) // İçindeki sadece aktif ürünleri al
+                    .ThenInclude(u => u.Eslesmeler) // "Yanına iyi gider" önerilerinin Id'leri
                 .Include(k => k.Cafe) // Kafenin temel bilgisini de ilişki üzerinden hazır tut
                 .Where(k => k.CafeId == cafeId && k.AktifMi == true) // İŞTE FİLTRE BURADA!
                 .OrderBy(k => k.Sira)
