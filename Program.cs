@@ -49,8 +49,12 @@ builder.Services.AddScoped<HesapTokenServisi>();
 // Hatalı giriş sayaçları bellekte tutulduğu için tek örnek (singleton) olmalı.
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<GirisKilidi>();
-// Yapay zekâ istemcisini ve günlük kullanım sayaçlarını tuttuğu için tek örnek.
-builder.Services.AddSingleton<AciklamaOnericisi>();
+// Ürün açıklaması önerisi (Groq ücretsiz katmanı). Kafe sahibi ekranda beklediği için kısa zaman aşımı.
+builder.Services.AddHttpClient<AciklamaOnericisi>(client =>
+{
+    client.BaseAddress = new Uri("https://api.groq.com/openai/v1/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpClient<EpostaGonderici>(client =>
 {
