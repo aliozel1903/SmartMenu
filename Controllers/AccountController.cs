@@ -23,15 +23,18 @@ namespace SmartMenu.Controllers
         private readonly EpostaGonderici _epostaGonderici;
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _env;
+        private readonly GirisKilidi _girisKilidi;
 
         public AccountController(ApplicationDbContext context, HesapTokenServisi tokenServisi,
-            EpostaGonderici epostaGonderici, IConfiguration configuration, IWebHostEnvironment env)
+            EpostaGonderici epostaGonderici, IConfiguration configuration, IWebHostEnvironment env,
+            GirisKilidi girisKilidi)
         {
             _context = context;
             _tokenServisi = tokenServisi;
             _epostaGonderici = epostaGonderici;
             _configuration = configuration;
             _env = env;
+            _girisKilidi = girisKilidi;
         }
 
         // 1. GİRİŞ SAYFASINI AÇ
@@ -48,6 +51,17 @@ namespace SmartMenu.Controllers
         [EnableRateLimiting("giris")]
         public async Task<IActionResult> Login(string email, string password, bool rememberMe)
         {
+            var normalEposta = EpostaNormalize(email);
+
+            // Kilitliyken şifre hiç kontrol edilmez; yoksa saldırgan kilit süresince de denemeye devam
+            // edip doğru şifreyi bulduğunda cevabın değiştiğini görebilirdi.
+            var kalanKilit = _girisKilidi.KalanSure(normalEposta);
+            if (kalanKilit != null)
+            {
+                ModelState.AddModelError(string.Empty, KilitMesaji(kalanKilit.Value));
+                return View();
+            }
+
             var cafe = await KafeyiBulAsync(email);
 
             // Şifre alanı boş gönderilirse BCrypt hata fırlatıyordu (boş metin null olarak gelir); bu durum
@@ -55,6 +69,8 @@ namespace SmartMenu.Controllers
             if (cafe != null && !string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(cafe.SifreHash)
                 && BCrypt.Net.BCrypt.Verify(password, cafe.SifreHash))
             {
+                _girisKilidi.Sifirla(normalEposta);
+
                 // Bu uyarı sadece şifre doğruysa gösterilir; böylece başkası bir adresin kayıtlı olup
                 // olmadığını bu mesaj üzerinden öğrenemez.
                 if (!cafe.EmailDogrulandi)
@@ -69,8 +85,21 @@ namespace SmartMenu.Controllers
                 return RedirectToAction("Index", "Dashboard");
             }
 
+            // Boş bırakılan adres sayılmaz; yoksa herkesin ortak "boş adres" sayacı kilitlenirdi.
+            if (!string.IsNullOrEmpty(normalEposta) && _girisKilidi.HataKaydet(normalEposta))
+            {
+                ModelState.AddModelError(string.Empty, KilitMesaji(GirisKilidi.KilitSuresi));
+                return View();
+            }
+
             ModelState.AddModelError(string.Empty, "Geçersiz e-posta veya şifre");
             return View();
+        }
+
+        private static string KilitMesaji(TimeSpan kalan)
+        {
+            var dakika = (int)Math.Ceiling(kalan.TotalMinutes);
+            return $"Bu adresle çok fazla hatalı giriş denendi. {dakika} dakika sonra tekrar dene ya da \"Şifremi Unuttum\" ile şifreni sıfırla.";
         }
 
         public IActionResult Register()
@@ -256,6 +285,10 @@ namespace SmartMenu.Controllers
             // Bağlantıya tıklayabildiğine göre e-posta adresi gerçekten bu kişiye ait.
             cafe.EmailDogrulandi = true;
             await _context.SaveChangesAsync();
+
+            // Biri hesabı kilitlemek için bilerek yanlış şifre denediyse, gerçek sahibi şifresini
+            // sıfırlayarak 15 dakika beklemeden hemen girebilir.
+            _girisKilidi.Sifirla(EpostaNormalize(cafe.Email));
 
             TempData["Basari"] = "Şifren güncellendi. Yeni şifrenle giriş yapabilirsin.";
             return RedirectToAction(nameof(Login));

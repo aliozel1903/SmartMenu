@@ -46,6 +46,9 @@ builder.Services.AddDataProtection()
 builder.Services.AddScoped<TaramaAnomaliServisi>();
 builder.Services.AddScoped<GuvenliResimYukleyici>();
 builder.Services.AddScoped<HesapTokenServisi>();
+// Hatalı giriş sayaçları bellekte tutulduğu için tek örnek (singleton) olmalı.
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<GirisKilidi>();
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpClient<EpostaGonderici>(client =>
 {
