@@ -86,7 +86,10 @@
                 </div>
 
                 <div>
-                    <label asp-for="Icerik" class="block text-[13px] font-semibold text-on-surface-variant mb-2">Açıklama</label>
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <label asp-for="Icerik" class="block text-[13px] font-semibold text-on-surface-variant">Açıklama</label>
+                        <partial name="_AciklamaOner" />
+                    </div>
                     <textarea asp-for="Icerik" rows="3" class="w-full bg-surface-container py-3 px-4 rounded-xl border border-transparent focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 text-[15px] outline-none transition-all resize-none"></textarea>
                 </div>
 

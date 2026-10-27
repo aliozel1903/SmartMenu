@@ -49,6 +49,8 @@ builder.Services.AddScoped<HesapTokenServisi>();
 // Hatalı giriş sayaçları bellekte tutulduğu için tek örnek (singleton) olmalı.
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<GirisKilidi>();
+// Yapay zekâ istemcisini ve günlük kullanım sayaçlarını tuttuğu için tek örnek.
+builder.Services.AddSingleton<AciklamaOnericisi>();
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpClient<EpostaGonderici>(client =>
 {

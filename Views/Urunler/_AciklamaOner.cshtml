@@ -1,0 +1,75 @@
+@inject SmartMenu.Services.AciklamaOnericisi AciklamaOnericisi
+
+@* Yapay zekâ ile açıklama önerisi. API anahtarı tanımlı değilse düğme hiç görünmez. *@
+@if (AciklamaOnericisi.Aktif)
+{
+    <button type="button" id="aciklamaOnerDugmesi"
+            title="Yapay zekâ ürün adından bir açıklama yazar. Kaydetmeden önce okuyup düzeltin."
+            class="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-[12px] font-bold text-primary transition-colors hover:bg-primary/20 disabled:cursor-wait disabled:opacity-60">
+        <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+        <span id="aciklamaOnerYazisi">Açıklama Öner</span>
+    </button>
+
+    <script>
+        (function () {
+            const dugme = document.getElementById('aciklamaOnerDugmesi');
+            const yazi = document.getElementById('aciklamaOnerYazisi');
+            const form = dugme.closest('form');
+
+            function uyar(metin, ikon) {
+                // titleText: sunucudan gelen metin HTML olarak işlenmesin.
+                Swal.fire({ icon: ikon, titleText: metin, confirmButtonText: 'Tamam', confirmButtonColor: '#0058bc' });
+            }
+
+            dugme.addEventListener('click', async function () {
+                // Alanlar tıklama anında bulunur: bu betik açıklama kutusundan önce çalışır, o an kutu henüz sayfada yoktur.
+                const adKutusu = form.elements['Ad'];
+                const kategoriKutusu = form.elements['KategoriId'];
+                const aciklamaKutusu = form.elements['Icerik'];
+
+                const ad = adKutusu.value.trim();
+                if (!ad) {
+                    uyar('Önce ürün adını yazın.', 'info');
+                    adKutusu.focus();
+                    return;
+                }
+
+                // Kafe sahibinin kendi yazdığı açıklama habersizce silinmesin.
+                if (aciklamaKutusu.value.trim()) {
+                    const onay = await Swal.fire({
+                        icon: 'question',
+                        titleText: 'Mevcut açıklamanın yerine yeni öneri yazılsın mı?',
+                        showCancelButton: true,
+                        confirmButtonText: 'Evet, yaz',
+                        cancelButtonText: 'Vazgeç',
+                        confirmButtonColor: '#0058bc'
+                    });
+                    if (!onay.isConfirmed) return;
+                }
+
+                const veri = new FormData();
+                veri.append('ad', ad);
+                if (kategoriKutusu && kategoriKutusu.value) veri.append('kategoriId', kategoriKutusu.value);
+                veri.append('__RequestVerificationToken', form.elements['__RequestVerificationToken'].value);
+
+                dugme.disabled = true;
+                yazi.textContent = 'Yazılıyor...';
+                try {
+                    const yanit = await fetch('@Url.Action("AciklamaOner", "Urunler")', { method: 'POST', body: veri });
+                    const sonuc = await yanit.json();
+                    if (sonuc.aciklama) {
+                        aciklamaKutusu.value = sonuc.aciklama;
+                        aciklamaKutusu.focus();
+                    } else {
+                        uyar(sonuc.hata || 'Öneri alınamadı.', 'warning');
+                    }
+                } catch {
+                    uyar('Öneri alınamadı. Tekrar deneyin.', 'error');
+                } finally {
+                    dugme.disabled = false;
+                    yazi.textContent = 'Açıklama Öner';
+                }
+            });
+        })();
+    </script>
+}

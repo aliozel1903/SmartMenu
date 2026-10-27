@@ -16,11 +16,13 @@ namespace SmartMenu.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly GuvenliResimYukleyici _resimYukleyici;
+        private readonly AciklamaOnericisi _aciklamaOnericisi;
 
-        public UrunlerController(ApplicationDbContext context, GuvenliResimYukleyici resimYukleyici)
+        public UrunlerController(ApplicationDbContext context, GuvenliResimYukleyici resimYukleyici, AciklamaOnericisi aciklamaOnericisi)
         {
             _context = context;
             _resimYukleyici = resimYukleyici;
+            _aciklamaOnericisi = aciklamaOnericisi;
         }
 
         private int GetCurrentCafeId()
@@ -71,6 +73,30 @@ namespace SmartMenu.Controllers
             }
 
             return istenen;
+        }
+
+        // Formdaki "Açıklama Öner" düğmesi. Yapay zekânın önerisini döner, hiçbir şey kaydetmez:
+        // metin kutuya yazılır, kafe sahibi okuyup düzeltir ve formu kendisi kaydeder.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AciklamaOner(string? ad, int? kategoriId, CancellationToken iptal)
+        {
+            var urunAdi = (ad ?? string.Empty).Trim();
+            if (urunAdi.Length == 0 || urunAdi.Length > 100)
+            {
+                return Json(new { hata = "Önce ürün adını yazın (en fazla 100 karakter)." });
+            }
+
+            int myCafeId = GetCurrentCafeId();
+
+            // Kategori adı sadece bu kafenin kendi kategorisiyse kullanılır.
+            var kategoriAdi = kategoriId == null ? null : await _context.Kategoriler
+                .Where(k => k.Id == kategoriId && k.CafeId == myCafeId)
+                .Select(k => k.Ad)
+                .FirstOrDefaultAsync(iptal);
+
+            var sonuc = await _aciklamaOnericisi.OnerAsync(myCafeId, urunAdi, kategoriAdi, iptal);
+            return Json(new { aciklama = sonuc.Aciklama, hata = sonuc.Hata });
         }
 
         public async Task<IActionResult> Index()
