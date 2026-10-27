@@ -242,13 +242,22 @@
             return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value);
         }
 
+        // Ürün adları kafe sahibinin yazdığı metindir; HTML içine konmadan önce kaçırılır.
+        // Yoksa adına "<img onerror=...>" yazılmış bir ürün müşterinin tarayıcısında kod çalıştırırdı.
+        function htmlKacir(metin) {
+            const div = document.createElement('div');
+            div.textContent = metin;
+            return div.innerHTML;
+        }
+
         function showMenuToast(title, icon = 'success', timer = 1300) {
             // Müşteri menüsü için küçük, mobil uyumlu SweetAlert bildirimi.
             Swal.fire({
                 toast: true,
                 position: 'top',
                 icon,
-                title,
+                // title HTML olarak işlenir; ürün adı içerebildiği için düz metin olan titleText kullanıyoruz.
+                titleText: title,
                 showConfirmButton: false,
                 timer,
                 timerProgressBar: true,
@@ -282,7 +291,7 @@
                 row.className = 'flex items-center justify-between gap-3 rounded-xl border border-stone-100 p-3';
                 row.innerHTML = `
                     <div class="min-w-0">
-                        <p class="truncate text-sm font-extrabold text-stone-950">${item.ad}</p>
+                        <p class="truncate text-sm font-extrabold text-stone-950">${htmlKacir(item.ad)}</p>
                         <p class="text-xs font-semibold text-stone-500">${formatCurrency(item.fiyat)}</p>
                     </div>
                     <div class="flex items-center gap-2">
@@ -411,7 +420,8 @@
                 toast: true,
                 position: 'top',
                 icon,
-                title,
+                // title HTML olarak işlenir; ürün adı içerebildiği için düz metin olan titleText kullanıyoruz.
+                titleText: title,
                 showConfirmButton: false,
                 timer,
                 timerProgressBar: true,
