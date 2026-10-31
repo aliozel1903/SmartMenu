@@ -137,6 +137,23 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Güvenlik başlıkları:
+//  - X-Frame-Options: başka bir site paneli görünmez bir çerçeveye gömüp kafe sahibine farkında olmadan
+//    tıklatamaz (clickjacking). QR yazdırma kendi sayfamızda çerçeve açtığı için SAMEORIGIN.
+//  - X-Content-Type-Options: tarayıcı yüklenen dosyanın türünü tahmin etmeye çalışmaz; resim diye yüklenen
+//    bir dosya betik olarak çalıştırılamaz.
+//  - Referrer-Policy: dış sitelere (yazı tipi, CDN) giden isteklerde adres yerine sadece alan adı gider;
+//    menü adresindeki QR token'ı dışarı sızmaz.
+app.Use(async (context, next) =>
+{
+    var basliklar = context.Response.Headers;
+    basliklar["X-Frame-Options"] = "SAMEORIGIN";
+    basliklar["X-Content-Type-Options"] = "nosniff";
+    basliklar["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    await next();
+});
+
 app.UseStaticFiles();
 
 app.UseRouting();
