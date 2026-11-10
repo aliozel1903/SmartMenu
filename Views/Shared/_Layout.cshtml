@@ -39,13 +39,14 @@
 <body class="bg-background text-on-surface min-h-screen pb-24 lg:pb-0 lg:pl-[260px] overflow-x-hidden">
     
     <aside class="fixed left-0 top-0 h-full w-[260px] border-r border-outline-variant bg-surface-container-lowest shadow-[0_4px_20px_rgba(0,0,0,0.05)] hidden lg:flex flex-col p-6 z-50">
-        <div class="mb-10">
+        @* Logo, ad ve "Yönetim Paneli" yazısı birlikte tek bağlantı: tıklanınca SmartMenu ana sayfası açılır. *@
+        <a href="/" title="SmartMenu ana sayfası" class="block -m-2 mb-8 p-2 rounded-xl hover:bg-surface-container transition-colors">
             <div class="flex items-center gap-3">
-                <img src="~/img/logo-128.png" alt="SmartMenu" class="w-10 h-10 drop-shadow-sm" />
+                <img src="~/img/logo-128.png" alt="" class="w-10 h-10 drop-shadow-sm" />
                 <h1 class="text-2xl font-bold text-primary tracking-tight">SmartMenu</h1>
             </div>
             <p class="text-[11px] font-semibold text-on-surface-variant uppercase tracking-widest mt-1">Yönetim Paneli</p>
-        </div>
+        </a>
         
         <nav class="flex-1 space-y-2">
             <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors rounded-xl" href="/Dashboard">
