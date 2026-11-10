@@ -16,7 +16,7 @@ WORKDIR /app
 COPY --from=derleme /app ./
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-# Sunucu Londra'da ve varsayılan saat dilimi UTC. Bu olmadan sipariş saatleri ve fişler 3 saat geri,
+# Kapsayıcının varsayılan saat dilimi UTC. Bu olmadan sipariş saatleri ve fişler 3 saat geri,
 # gece 00:00-03:00 arasındaki menü ziyaretleri de bir önceki güne yazılırdı.
 ENV TZ=Europe/Istanbul
 EXPOSE 8080

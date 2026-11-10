@@ -122,10 +122,11 @@ using (var scope = app.Services.CreateScope())
 
 app.UseForwardedHeaders();
 
-// Sağlık kontrolü: Northflank yeni sürümü açarken bu adres 200 dönene kadar trafiği eski sürümde tutar,
-// böylece deploy sırasında "Connection refused" sayfası çıkmaz. HTTPS yönlendirmesinden önce durur, çünkü
-// Northflank kapsayıcıya doğrudan HTTP ile sorar. Veritabanını kontrol etmez: birkaç saniyede bir gelen
-// istekler Neon'un uykuya geçmesini engelleyip ücretsiz kullanım süresini tüketirdi.
+// Sağlık kontrolü: Render yeni sürümü açarken bu adres 200 dönene kadar trafiği eski sürümde tutar,
+// böylece deploy sırasında hata sayfası çıkmaz. UptimeRobot da siteyi uyanık tutmak için 5 dakikada bir
+// bu adresi yoklar. HTTPS yönlendirmesinden önce durur, çünkü platform kapsayıcıya doğrudan HTTP ile sorar.
+// Veritabanını kontrol etmez: sık gelen bu istekler Neon'un uykuya geçmesini engelleyip ücretsiz kullanım
+// süresini tüketirdi.
 app.UseHealthChecks("/saglik");
 
 // Configure the HTTP request pipeline.
