@@ -184,6 +184,16 @@
                 seciliEtiket?.removeAttribute('aria-current');
                 secili?.setAttribute('aria-current', 'true');
                 seciliEtiket = secili;
+                etiketiOrtala(secili);
+            }
+
+            // Telefonda etiketlerin hepsi sığmaz: seçili etiket şeritte ortaya kaydırılır, ekran dışında kalmaz.
+            // Sadece şerit yatayda kayar, sayfanın dikey konumuna dokunulmaz.
+            function etiketiOrtala(etiket) {
+                if (!etiket) return;
+                const e = etiket.getBoundingClientRect();
+                const s = serit.getBoundingClientRect();
+                serit.scrollTo({ left: serit.scrollLeft + (e.left - s.left) - (s.width - e.width) / 2, behavior: 'smooth' });
             }
 
             let bekliyor = false;
