@@ -112,6 +112,23 @@ namespace SmartMenu.Controllers
             return View(viewModel);
         }
 
+        private const string MasaNoHatasi = "Masa numarası 1 ile 9999 arasında bir sayı olmalı.";
+
+        // Masa numarası sadece rakam olabilir. Menüdeki kutu harfi zaten engelliyor, ama istek elle de
+        // gönderilebildiği için sunucu da kontrol eder. "07" ile "7" aynı masa sayılsın diye sayıya çevrilir;
+        // böylece mutfak ekranında ve masa başına sınırlarda tek bir masa numarası görünür.
+        private static string? MasaNoNormalize(string? masaNo)
+        {
+            var metin = masaNo?.Trim();
+            if (string.IsNullOrEmpty(metin) || metin.Length > 4 || !metin.All(char.IsAsciiDigit))
+            {
+                return null;
+            }
+
+            var sayi = int.Parse(metin, System.Globalization.CultureInfo.InvariantCulture);
+            return sayi >= 1 ? sayi.ToString(System.Globalization.CultureInfo.InvariantCulture) : null;
+        }
+
         [AllowAnonymous]
         [HttpPost]
         // Giriş gerektirmeyen bu uca aynı IP'den gelen istek sayısı sınırlanır (sipariş/bildirim spam'i).
@@ -147,7 +164,12 @@ namespace SmartMenu.Controllers
                 return BadRequest(new { success = false, message = "Bu şubede hesap isteme özelliği şu anda kapalı." });
             }
 
-            var masaNo = model.MasaNo.Trim();
+            var masaNo = MasaNoNormalize(model.MasaNo);
+            if (masaNo == null)
+            {
+                return BadRequest(new { success = false, message = MasaNoHatasi });
+            }
+
             var ucDakikaOnce = DateTime.UtcNow.AddMinutes(-3);
 
             // Spam koruması: aynı şube ve masadan son 3 dakikada okunmamış çağrı varsa yeni kayıt açmıyoruz.
@@ -191,6 +213,12 @@ namespace SmartMenu.Controllers
                 return BadRequest(new { message = "Sipariş bilgileri eksik." });
             }
 
+            var masaNo = MasaNoNormalize(model.MasaNo);
+            if (masaNo == null)
+            {
+                return BadRequest(new { message = MasaNoHatasi });
+            }
+
             // Siparişin hangi şubeye düşeceğini istemci belirlemiyor; QR token'ından sunucu çözüyor.
             var sube = await _context.Subeler.FirstOrDefaultAsync(s => s.QrToken == model.Token);
             if (sube == null)
@@ -225,7 +253,7 @@ namespace SmartMenu.Controllers
             var siparis = new Siparis
             {
                 SubeId = sube.Id,
-                MasaNo = model.MasaNo.Trim(),
+                MasaNo = masaNo,
                 SiparisTarihi = DateTime.UtcNow,
                 Durum = "Bekliyor"
             };

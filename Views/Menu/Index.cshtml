@@ -161,6 +161,10 @@
 
     <script>
         const menuToken = @Html.Raw(Json.Serialize(menuToken));
+
+        // Masa numarası kuralları sepet ile Garson/Hesap penceresinde ortak; sunucu da aynısını kontrol eder.
+        const sadeceRakam = metin => metin.replace(/\D/g, '').slice(0, 4);
+        const gecerliMasaNo = metin => /^[0-9]{1,4}$/.test(metin) && Number(metin) >= 1;
     </script>
 
     <script>
@@ -299,7 +303,7 @@
 
                 <div class="mt-5 rounded-xl bg-stone-50 p-4">
                     <label for="masaNo" class="mb-2 block text-[13px] font-bold text-stone-700">Masa Numaranız</label>
-                    <input id="masaNo" type="text" class="w-full rounded-lg border border-stone-200 px-4 py-3 text-sm font-semibold outline-none focus:border-amber-700 focus:ring-4 focus:ring-amber-700/10" placeholder="Örn: 12" />
+                    <input id="masaNo" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" class="w-full rounded-lg border border-stone-200 px-4 py-3 text-sm font-semibold outline-none focus:border-amber-700 focus:ring-4 focus:ring-amber-700/10" placeholder="Örn: 12" />
                     <div class="mt-4 flex items-center justify-between">
                         <span class="text-sm font-bold text-stone-500">Toplam</span>
                         <span id="cartTotal" class="text-xl font-extrabold text-amber-700">₺0,00</span>
@@ -324,6 +328,11 @@
         const cartTotal = document.getElementById('cartTotal');
         const submitOrder = document.getElementById('submitOrder');
         const masaNoInput = document.getElementById('masaNo');
+
+        // Masa numarası sadece rakam: yapıştırılan ya da yazılan harfler anında silinir.
+        masaNoInput.addEventListener('input', () => {
+            masaNoInput.value = sadeceRakam(masaNoInput.value);
+        });
 
         function getCart() {
             return JSON.parse(localStorage.getItem(cartKey) || '[]');
@@ -582,6 +591,11 @@
                 return;
             }
 
+            if (!gecerliMasaNo(masaNo)) {
+                showMenuToast('Masa numarası 1 ile 9999 arasında bir sayı olmalı.', 'warning');
+                return;
+            }
+
             submitOrder.disabled = true;
             submitOrder.textContent = 'Gönderiliyor...';
 
@@ -681,6 +695,11 @@
                 input: 'text',
                 inputLabel: 'Masa numaranız',
                 inputPlaceholder: 'Örn: 12',
+                inputAttributes: { inputmode: 'numeric', pattern: '[0-9]*', maxlength: '4', autocomplete: 'off' },
+                didOpen: () => {
+                    const kutu = Swal.getInput();
+                    kutu.addEventListener('input', () => { kutu.value = sadeceRakam(kutu.value); });
+                },
                 showCancelButton: true,
                 confirmButtonText: 'Gönder',
                 cancelButtonText: 'Vazgeç',
@@ -696,6 +715,10 @@
                 inputValidator: value => {
                     if (!value || !value.trim()) {
                         return 'Lütfen masa numaranızı yazın.';
+                    }
+
+                    if (!gecerliMasaNo(value.trim())) {
+                        return 'Masa numarası 1 ile 9999 arasında bir sayı olmalı.';
                     }
                 }
             });
