@@ -165,6 +165,51 @@
         // Masa numarası kuralları sepet ile Garson/Hesap penceresinde ortak; sunucu da aynısını kontrol eder.
         const sadeceRakam = metin => metin.replace(/\D/g, '').slice(0, 4);
         const gecerliMasaNo = metin => /^[0-9]{1,4}$/.test(metin) && Number(metin) >= 1;
+
+        // Menüdeki bütün kısa bildirimler ("sepete eklendi", "siparişiniz mutfağa iletildi", garson çağrısı).
+        // Ekranın üstünde çıktıklarında telefonda adres çubuğu ve çentik bölgesine denk gelip gözden
+        // kaçıyorlardı. Bu yüzden altta, başparmağın gördüğü yerde çıkarlar: alt çubuğun, açıksa
+        // "Yanına iyi gider" panelinin ya da sepet penceresinin hemen üstünde. Hiçbir düğmeyi kapatmazlar.
+        function bildirimAltBoslugu() {
+            const altOgeler = [
+                document.getElementById('altCubuk'),
+                document.getElementById('oneriPaneli'),
+                document.querySelector('#cartModal.acik .sepet-panel')
+            ];
+            let bosluk = 12;
+
+            altOgeler.forEach(oge => {
+                if (oge && oge.getClientRects().length > 0) {
+                    bosluk = Math.max(bosluk, window.innerHeight - oge.getBoundingClientRect().top + 10);
+                }
+            });
+
+            return bosluk;
+        }
+
+        function menuBildirimi(title, icon, timer) {
+            Swal.fire({
+                toast: true,
+                position: 'bottom',
+                icon,
+                // title HTML olarak işlenir; ürün adı içerebildiği için düz metin olan titleText kullanıyoruz.
+                titleText: title,
+                showConfirmButton: false,
+                timer,
+                timerProgressBar: true,
+                width: 'min(92vw, 400px)',
+                padding: '0.85rem 1rem',
+                background: '#ffffff',
+                color: '#181512',
+                customClass: {
+                    popup: 'rounded-2xl shadow-2xl ring-1 ring-black/5',
+                    title: 'text-[15px] font-extrabold'
+                },
+                didOpen: popup => {
+                    popup.parentElement.style.paddingBottom = `calc(${bildirimAltBoslugu()}px + env(safe-area-inset-bottom, 0px))`;
+                }
+            });
+        }
     </script>
 
     <script>
@@ -355,25 +400,7 @@
         }
 
         function showMenuToast(title, icon = 'success', timer = 1300) {
-            // Müşteri menüsü için küçük, mobil uyumlu SweetAlert bildirimi.
-            Swal.fire({
-                toast: true,
-                position: 'top',
-                icon,
-                // title HTML olarak işlenir; ürün adı içerebildiği için düz metin olan titleText kullanıyoruz.
-                titleText: title,
-                showConfirmButton: false,
-                timer,
-                timerProgressBar: true,
-                width: 'min(92vw, 340px)',
-                padding: '0.75rem 0.9rem',
-                background: '#ffffff',
-                color: '#181512',
-                customClass: {
-                    popup: 'rounded-xl shadow-lg',
-                    title: 'text-sm font-extrabold'
-                }
-            });
+            menuBildirimi(title, icon, timer);
         }
 
         function renderCart() {
@@ -642,25 +669,7 @@
         }
 
         function showServiceAlert(title, icon = 'info', timer = 2200) {
-            // Garson/Hesap bildirimlerinde de küçük ve mobil uyumlu SweetAlert kullanıyoruz.
-            Swal.fire({
-                toast: true,
-                position: 'top',
-                icon,
-                // title HTML olarak işlenir; ürün adı içerebildiği için düz metin olan titleText kullanıyoruz.
-                titleText: title,
-                showConfirmButton: false,
-                timer,
-                timerProgressBar: true,
-                width: 'min(92vw, 340px)',
-                padding: '0.75rem 0.9rem',
-                background: '#ffffff',
-                color: '#181512',
-                customClass: {
-                    popup: 'rounded-xl shadow-lg',
-                    title: 'text-sm font-extrabold'
-                }
-            });
+            menuBildirimi(title, icon, timer);
         }
 
         function updateServiceCallButtons() {
