@@ -48,6 +48,15 @@
         /* Sticky kategori menüsünün altında başlıklar ezilmesin diye ofset bırakıyoruz. */
         section { scroll-margin-top: 96px; }
 
+        /* Sepet penceresi: arka plan yavaşça kararır, pencere aşağıdan kayarak gelir (bkz. sepetiAc / sepetiKapat). */
+        #cartModal { opacity: 0; transition: opacity .2s ease; }
+        #cartModal.acik { opacity: 1; }
+        #cartModal .sepet-panel { transform: translateY(32px); transition: transform .28s cubic-bezier(.2, .8, .2, 1); }
+        #cartModal.acik .sepet-panel { transform: none; }
+        @@media (prefers-reduced-motion: reduce) {
+            #cartModal, #cartModal .sepet-panel { transition: none; }
+        }
+
         /* Ekranda o an bakılan kategorinin etiketi (bkz. aşağıdaki kategori takibi). */
         .kategori-serit a[aria-current="true"] { background-color: #1c1917; border-color: #1c1917; color: #fff; }
     </style>
@@ -275,7 +284,7 @@
 
     <div id="cartModal" class="fixed inset-0 z-[60] hidden bg-black/50 px-4 py-6 backdrop-blur-sm">
         <div class="mx-auto flex h-full max-w-md items-end sm:items-center">
-            <div class="w-full rounded-2xl bg-white p-5 shadow-2xl">
+            <div class="sepet-panel w-full rounded-2xl bg-white p-5 shadow-2xl">
                 <div class="mb-4 flex items-center justify-between">
                     <div>
                         <h2 class="text-xl font-extrabold text-stone-950">Sepetim</h2>
@@ -530,14 +539,33 @@
             if (decrease) changeQuantity(Number(decrease.dataset.id), -1);
         });
 
+        let sepetKapatmaZamanlayici;
+
+        function sepetiAc() {
+            clearTimeout(sepetKapatmaZamanlayici);
+            cartModal.classList.remove('hidden');
+            // Tarayıcı önce görünür hali çizsin, sonra "acik" sınıfıyla geçiş başlasın; yoksa animasyon atlanır.
+            cartModal.offsetHeight;
+            cartModal.classList.add('acik');
+        }
+
+        function sepetiKapat() {
+            cartModal.classList.remove('acik');
+            // Geçiş bitince (style'daki süre) pencereyi tamamen gizle.
+            sepetKapatmaZamanlayici = setTimeout(() => cartModal.classList.add('hidden'), 280);
+        }
+
         cartButton.addEventListener('click', function () {
             oneriPaneliniKapat();
             renderCart();
-            cartModal.classList.remove('hidden');
+            sepetiAc();
         });
 
-        closeCart.addEventListener('click', function () {
-            cartModal.classList.add('hidden');
+        closeCart.addEventListener('click', sepetiKapat);
+
+        // Pencerenin dışındaki karanlık alana dokununca da kapanır.
+        cartModal.addEventListener('click', function (event) {
+            if (!event.target.closest('.sepet-panel')) sepetiKapat();
         });
 
         submitOrder.addEventListener('click', async function () {
@@ -577,7 +605,7 @@
 
                 localStorage.removeItem(cartKey);
                 renderCart();
-                cartModal.classList.add('hidden');
+                sepetiKapat();
                 showMenuToast(result.message || 'Siparişiniz alındı.', 'success', 3200);
             } finally {
                 submitOrder.disabled = false;
