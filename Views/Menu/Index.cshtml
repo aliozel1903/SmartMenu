@@ -47,6 +47,9 @@
 
         /* Sticky kategori menüsünün altında başlıklar ezilmesin diye ofset bırakıyoruz. */
         section { scroll-margin-top: 96px; }
+
+        /* Ekranda o an bakılan kategorinin etiketi (bkz. aşağıdaki kategori takibi). */
+        .kategori-serit a[aria-current="true"] { background-color: #1c1917; border-color: #1c1917; color: #fff; }
     </style>
 </head>
 <body class="bg-[#fbfaf7] text-stone-950 min-h-screen pb-24">
@@ -149,6 +152,49 @@
 
     <script>
         const menuToken = @Html.Raw(Json.Serialize(menuToken));
+    </script>
+
+    <script>
+        // Kategori takibi: sayfa kaydırıldıkça başlığı yapışkan çubuğun altına gelmiş son kategori "şu an
+        // buradasın" diye vurgulanır. Müşteri uzun menüde hangi bölümde olduğunu çubuktan görür.
+        (function () {
+            const serit = document.querySelector('.kategori-serit');
+            if (!serit) return;
+
+            const etiketler = [...serit.querySelectorAll('a[href^="#kategori-"]')];
+            const bolumler = etiketler.map(a => document.querySelector(a.getAttribute('href')));
+            let seciliEtiket = null;
+
+            function seciliyiGuncelle() {
+                // Etikete basınca bölüm, scroll-margin-top (96px) kadar aşağıda durur; çizgi bunun altında kalmalı
+                // ki basılan etiket vurgulansın.
+                const cizgi = serit.closest('nav').getBoundingClientRect().bottom + 56;
+                let secili = etiketler[0];
+
+                bolumler.forEach((bolum, i) => {
+                    if (bolum && bolum.getBoundingClientRect().top <= cizgi) secili = etiketler[i];
+                });
+
+                // Son kategori kısaysa sayfa onu çizgiye kadar kaydıramaz; en alta inildiyse sonuncuyu seç.
+                if (window.scrollY > 0 && window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+                    secili = etiketler[etiketler.length - 1];
+                }
+
+                if (secili === seciliEtiket) return;
+                seciliEtiket?.removeAttribute('aria-current');
+                secili?.setAttribute('aria-current', 'true');
+                seciliEtiket = secili;
+            }
+
+            let bekliyor = false;
+            window.addEventListener('scroll', () => {
+                if (bekliyor) return;
+                bekliyor = true;
+                requestAnimationFrame(() => { seciliyiGuncelle(); bekliyor = false; });
+            }, { passive: true });
+
+            seciliyiGuncelle();
+        })();
     </script>
 
     @* Garson, Hesap ve Sepet tek satırlık alt çubukta durur. Eskiden ayrı ayrı yüzen düğmelerdi ve
