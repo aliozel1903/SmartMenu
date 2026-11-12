@@ -114,6 +114,9 @@ namespace SmartMenu.Controllers
 
         private const string MasaNoHatasi = "Masa numarası 1 ile 9999 arasında bir sayı olmalı.";
 
+        // Aynı masadan iki sipariş arasında en az bu kadar süre geçmeli (bkz. SiparisOlustur).
+        private static readonly TimeSpan MasaSiparisAraligi = TimeSpan.FromSeconds(60);
+
         // Masa numarası sadece rakam olabilir. Menüdeki kutu harfi zaten engelliyor, ama istek elle de
         // gönderilebildiği için sunucu da kontrol eder. "07" ile "7" aynı masa sayılsın diye sayıya çevrilir;
         // böylece mutfak ekranında ve masa başına sınırlarda tek bir masa numarası görünür.
@@ -230,6 +233,27 @@ namespace SmartMenu.Controllers
             if (!sube.IsSiparisAktif)
             {
                 return BadRequest(new { message = "Bu şube şu anda online sipariş almıyor." });
+            }
+
+            // Masa başına süre sınırı: aynı masadan arka arkaya (ör. 20 kez) sipariş gönderilip mutfak
+            // doldurulamasın. IP sınırı farklı telefonlardan gelen istekleri ayıramadığı için bu kontrol masaya
+            // göre yapılır. Personelin iptal ettiği sipariş sayılmaz; müşteri hemen yeniden sipariş verebilir.
+            var sonSiparisZamani = await _context.Siparisler
+                .Where(s => s.SubeId == sube.Id && s.MasaNo == masaNo && s.Durum != "İptal")
+                .MaxAsync(s => (DateTime?)s.SiparisTarihi);
+
+            if (sonSiparisZamani != null)
+            {
+                var kalan = MasaSiparisAraligi - (DateTime.UtcNow - sonSiparisZamani.Value);
+                if (kalan > TimeSpan.Zero)
+                {
+                    var kalanSaniye = (int)Math.Ceiling(kalan.TotalSeconds);
+                    return StatusCode(StatusCodes.Status429TooManyRequests, new
+                    {
+                        message = $"Bu masadan az önce sipariş verildi. Yeni sipariş için {kalanSaniye} saniye bekleyin.",
+                        kalanSaniye
+                    });
+                }
             }
 
             var urunIdleri = model.Urunler.Select(u => u.UrunId).Distinct().ToList();

@@ -365,6 +365,8 @@
 
     <script>
         const cartKey = `smartmenu-cart-${menuToken}`;
+        const sonSiparisKey = `smartmenu-son-siparis-${menuToken}`;
+        const siparisAraligiMs = 60000;
         const cartButton = document.getElementById('cartButton');
         const cartCount = document.getElementById('cartCount');
         const cartModal = document.getElementById('cartModal');
@@ -623,6 +625,13 @@
                 return;
             }
 
+            // Sunucu da masa başına 60 saniye sınırı uygular; bu kontrol aynı telefondan boşuna istek gitmesin diye.
+            const beklenecekSaniye = Math.ceil((Number(localStorage.getItem(sonSiparisKey) || 0) + siparisAraligiMs - Date.now()) / 1000);
+            if (beklenecekSaniye > 0) {
+                showMenuToast(`Yeni sipariş için ${beklenecekSaniye} saniye bekleyin.`, 'warning', 2600);
+                return;
+            }
+
             submitOrder.disabled = true;
             submitOrder.textContent = 'Gönderiliyor...';
 
@@ -640,10 +649,12 @@
                 const result = await response.json();
 
                 if (!response.ok) {
-                    showMenuToast(result.message || 'Sipariş oluşturulamadı.', 'error');
+                    // 429: bu masadan az önce sipariş verilmiş (başka bir telefondan da olabilir).
+                    showMenuToast(result.message || 'Sipariş oluşturulamadı.', response.status === 429 ? 'warning' : 'error', 3200);
                     return;
                 }
 
+                localStorage.setItem(sonSiparisKey, Date.now().toString());
                 localStorage.removeItem(cartKey);
                 renderCart();
                 sepetiKapat();
