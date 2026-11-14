@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartMenu.Data;
 using SmartMenu.Models;
+using SmartMenu.Services;
 using SmartMenu.ViewModels;
 using System.Linq;
 using System.Threading.Tasks;
@@ -112,25 +113,8 @@ namespace SmartMenu.Controllers
             return View(viewModel);
         }
 
-        private const string MasaNoHatasi = "Masa numarası 1 ile 9999 arasında bir sayı olmalı.";
-
         // Aynı masadan iki sipariş arasında en az bu kadar süre geçmeli (bkz. SiparisOlustur).
         private static readonly TimeSpan MasaSiparisAraligi = TimeSpan.FromSeconds(60);
-
-        // Masa numarası sadece rakam olabilir. Menüdeki kutu harfi zaten engelliyor, ama istek elle de
-        // gönderilebildiği için sunucu da kontrol eder. "07" ile "7" aynı masa sayılsın diye sayıya çevrilir;
-        // böylece mutfak ekranında ve masa başına sınırlarda tek bir masa numarası görünür.
-        private static string? MasaNoNormalize(string? masaNo)
-        {
-            var metin = masaNo?.Trim();
-            if (string.IsNullOrEmpty(metin) || metin.Length > 4 || !metin.All(char.IsAsciiDigit))
-            {
-                return null;
-            }
-
-            var sayi = int.Parse(metin, System.Globalization.CultureInfo.InvariantCulture);
-            return sayi >= 1 ? sayi.ToString(System.Globalization.CultureInfo.InvariantCulture) : null;
-        }
 
         [AllowAnonymous]
         [HttpPost]
@@ -167,10 +151,10 @@ namespace SmartMenu.Controllers
                 return BadRequest(new { success = false, message = "Bu şubede hesap isteme özelliği şu anda kapalı." });
             }
 
-            var masaNo = MasaNoNormalize(model.MasaNo);
+            var masaNo = MasaNumarasi.Normalize(model.MasaNo);
             if (masaNo == null)
             {
-                return BadRequest(new { success = false, message = MasaNoHatasi });
+                return BadRequest(new { success = false, message = MasaNumarasi.Hata });
             }
 
             var ucDakikaOnce = DateTime.UtcNow.AddMinutes(-3);
@@ -216,10 +200,10 @@ namespace SmartMenu.Controllers
                 return BadRequest(new { message = "Sipariş bilgileri eksik." });
             }
 
-            var masaNo = MasaNoNormalize(model.MasaNo);
+            var masaNo = MasaNumarasi.Normalize(model.MasaNo);
             if (masaNo == null)
             {
-                return BadRequest(new { message = MasaNoHatasi });
+                return BadRequest(new { message = MasaNumarasi.Hata });
             }
 
             // Siparişin hangi şubeye düşeceğini istemci belirlemiyor; QR token'ından sunucu çözüyor.
