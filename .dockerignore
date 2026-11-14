@@ -8,3 +8,4 @@ wwwroot/img/urunler/
 wwwroot/img/logolar/
 Dockerfile
 node_modules/
+tests/
